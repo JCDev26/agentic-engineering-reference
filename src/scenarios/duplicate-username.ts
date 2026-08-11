@@ -1,4 +1,8 @@
 import { ContributionRunner } from "../core/contribution-runner.js";
+import {
+  DeterministicContributorExecutor,
+  type ContributorExecutor,
+} from "../core/contributor-executor.js";
 import { InMemoryEvidenceRecorder } from "../core/evidence-recorder.js";
 import { DeterministicEvaluator } from "../core/evaluator.js";
 import { DeterministicExecutor } from "../core/executor.js";
@@ -6,10 +10,10 @@ import { DeterministicOutcomeResolver } from "../core/outcome-resolver.js";
 import { DeterministicPolicyEngine } from "../core/policy-engine.js";
 
 import type { ContributionRunResult } from "../core/contribution-runner.js";
-import type { Evaluation } from "../domain/evaluation.js";
-import type { Outcome } from "../domain/outcome.js";
 import type { Contribution } from "../domain/contribution.js";
 import type { EngineeringIntent } from "../domain/engineering-intent.js";
+import type { Evaluation } from "../domain/evaluation.js";
+import type { Outcome } from "../domain/outcome.js";
 import type { Policy } from "../domain/policy.js";
 import type { WorkItem } from "../domain/work-item.js";
 import type { Workflow } from "../domain/workflow.js";
@@ -27,6 +31,7 @@ export interface DuplicateUsernameScenarioResult {
 export interface DuplicateUsernameScenarioOptions {
   requestedTarget?: string;
   requestedCapabilityId?: string;
+  contributorExecutor?: ContributorExecutor;
 }
 
 export function runDuplicateUsernameReferenceScenario(
@@ -129,10 +134,16 @@ export function runDuplicateUsernameReferenceScenario(
     severity: "high",
   };
 
+  const contributorExecutor =
+    options.contributorExecutor ??
+    new DeterministicContributorExecutor(
+      new DeterministicExecutor()
+    );
+
   const runner = new ContributionRunner(
     new DeterministicPolicyEngine(),
     new InMemoryEvidenceRecorder(),
-    new DeterministicExecutor()
+    contributorExecutor
   );
 
   const runResult = runner.run({

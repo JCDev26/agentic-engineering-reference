@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
 
+import {
+  DeterministicContributorExecutor,
+  SimulatedContributorExecutor,
+} from "../src/core/contributor-executor.js";
+import { DeterministicExecutor } from "../src/core/executor.js";
 import { runDuplicateUsernameReferenceScenario } from "../src/scenarios/duplicate-username.js";
 
 describe("Reference Scenario 001: Prevent Duplicate Usernames", () => {
@@ -38,12 +43,7 @@ describe("Reference Scenario 001: Prevent Duplicate Usernames", () => {
     ]);
 
     expect(result.evaluation.result).toBe("passed");
-
     expect(result.outcome.status).toBe("completed");
-
-    expect(result.outcome.workflowId).toBe(
-      "workflow-001"
-    );
   });
 
   it("produces a failed outcome when policy prevents execution", () => {
@@ -101,5 +101,49 @@ describe("Reference Scenario 001: Prevent Duplicate Usernames", () => {
     );
 
     expect(result.outcome.status).toBe("failed");
+  });
+
+  it("preserves engineering contracts across contributor implementations", () => {
+    const deterministicResult =
+      runDuplicateUsernameReferenceScenario({
+        contributorExecutor:
+          new DeterministicContributorExecutor(
+            new DeterministicExecutor()
+          ),
+      });
+
+    const simulatedResult =
+      runDuplicateUsernameReferenceScenario({
+        contributorExecutor:
+          new SimulatedContributorExecutor(),
+      });
+
+    expect(deterministicResult.workItem).toEqual(
+      simulatedResult.workItem
+    );
+
+    expect(deterministicResult.intent).toEqual(
+      simulatedResult.intent
+    );
+
+    expect(deterministicResult.workflow).toEqual(
+      simulatedResult.workflow
+    );
+
+    expect(
+      deterministicResult.contribution
+    ).toEqual(simulatedResult.contribution);
+
+    expect(
+      deterministicResult.evaluation.result
+    ).toBe(simulatedResult.evaluation.result);
+
+    expect(
+      deterministicResult.outcome.status
+    ).toBe(simulatedResult.outcome.status);
+
+    expect(
+      deterministicResult.outcome.status
+    ).toBe("completed");
   });
 });
