@@ -4,11 +4,40 @@ import {
   DeterministicContributorExecutor,
   SimulatedContributorExecutor,
 } from "../src/core/contributor-executor.js";
+import type { ContributorCandidate } from "../src/core/contribution-strategy.js";
 import { DeterministicExecutor } from "../src/core/executor.js";
 import { runDuplicateUsernameReferenceScenario } from "../src/scenarios/duplicate-username.js";
 
+function deterministicCandidate(): ContributorCandidate {
+  return {
+    contributor: {
+      id: "local-automation",
+      type: "automation",
+      capabilityIds: ["source.write"],
+      available: true,
+      provider: "reference-local",
+    },
+    executor: new DeterministicContributorExecutor(
+      new DeterministicExecutor()
+    ),
+  };
+}
+
+function simulatedCandidate(): ContributorCandidate {
+  return {
+    contributor: {
+      id: "simulated-contributor",
+      type: "external-service",
+      capabilityIds: ["source.write"],
+      available: true,
+      provider: "reference-simulated",
+    },
+    executor: new SimulatedContributorExecutor(),
+  };
+}
+
 describe("Reference Scenario 001: Prevent Duplicate Usernames", () => {
-  it("produces a completed outcome when governed execution satisfies evaluation requirements", () => {
+  it("selects a contributor and produces a completed governed outcome", () => {
     const result =
       runDuplicateUsernameReferenceScenario();
 
@@ -24,13 +53,11 @@ describe("Reference Scenario 001: Prevent Duplicate Usernames", () => {
       result.workflow.id
     );
 
-    expect(result.runResult.status).toBe(
-      "executed"
+    expect(result.selectedContributor.id).toBe(
+      "local-automation"
     );
 
-    expect(result.runResult.evidence).toHaveLength(
-      3
-    );
+    expect(result.runResult.status).toBe("executed");
 
     expect(
       result.runResult.evidence.map(
@@ -52,9 +79,7 @@ describe("Reference Scenario 001: Prevent Duplicate Usernames", () => {
         requestedTarget: "README.md",
       });
 
-    expect(result.runResult.status).toBe(
-      "blocked"
-    );
+    expect(result.runResult.status).toBe("blocked");
 
     expect(
       result.runResult.evidence.some(
@@ -63,10 +88,7 @@ describe("Reference Scenario 001: Prevent Duplicate Usernames", () => {
       )
     ).toBe(false);
 
-    expect(result.evaluation.result).toBe(
-      "failed"
-    );
-
+    expect(result.evaluation.result).toBe("failed");
     expect(result.outcome.status).toBe("failed");
   });
 
@@ -77,17 +99,9 @@ describe("Reference Scenario 001: Prevent Duplicate Usernames", () => {
           "deployment.execute",
       });
 
-    expect(result.runResult.status).toBe(
-      "blocked"
-    );
+    expect(result.runResult.status).toBe("blocked");
 
-    expect(result.runResult.evidence).toHaveLength(
-      1
-    );
-
-    expect(
-      result.runResult.evidence[0]?.type
-    ).toBe("capability-result");
+    expect(result.runResult.evidence).toHaveLength(1);
 
     expect(
       result.runResult.evidence[0]?.metadata
@@ -96,27 +110,26 @@ describe("Reference Scenario 001: Prevent Duplicate Usernames", () => {
       granted: false,
     });
 
-    expect(result.evaluation.result).toBe(
-      "failed"
-    );
-
+    expect(result.evaluation.result).toBe("failed");
     expect(result.outcome.status).toBe("failed");
   });
 
-  it("preserves engineering contracts across contributor implementations", () => {
+  it("preserves engineering contracts when contributor selection changes", () => {
     const deterministicResult =
       runDuplicateUsernameReferenceScenario({
-        contributorExecutor:
-          new DeterministicContributorExecutor(
-            new DeterministicExecutor()
-          ),
+        candidates: [deterministicCandidate()],
       });
 
     const simulatedResult =
       runDuplicateUsernameReferenceScenario({
-        contributorExecutor:
-          new SimulatedContributorExecutor(),
+        candidates: [simulatedCandidate()],
       });
+
+    expect(
+      deterministicResult.selectedContributor.id
+    ).not.toBe(
+      simulatedResult.selectedContributor.id
+    );
 
     expect(deterministicResult.workItem).toEqual(
       simulatedResult.workItem
@@ -133,6 +146,10 @@ describe("Reference Scenario 001: Prevent Duplicate Usernames", () => {
     expect(
       deterministicResult.contribution
     ).toEqual(simulatedResult.contribution);
+
+    expect(
+      deterministicResult.contributorProfile
+    ).toEqual(simulatedResult.contributorProfile);
 
     expect(
       deterministicResult.evaluation.result

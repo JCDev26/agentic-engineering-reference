@@ -1,8 +1,12 @@
 import { ContributionRunner } from "../core/contribution-runner.js";
 import {
   DeterministicContributorExecutor,
-  type ContributorExecutor,
+  SimulatedContributorExecutor,
 } from "../core/contributor-executor.js";
+import {
+  DeterministicContributionStrategy,
+  type ContributorCandidate,
+} from "../core/contribution-strategy.js";
 import { InMemoryEvidenceRecorder } from "../core/evidence-recorder.js";
 import { DeterministicEvaluator } from "../core/evaluator.js";
 import { DeterministicExecutor } from "../core/executor.js";
@@ -11,6 +15,10 @@ import { DeterministicPolicyEngine } from "../core/policy-engine.js";
 
 import type { ContributionRunResult } from "../core/contribution-runner.js";
 import type { Contribution } from "../domain/contribution.js";
+import type {
+  Contributor,
+  ContributorProfile,
+} from "../domain/contributor.js";
 import type { EngineeringIntent } from "../domain/engineering-intent.js";
 import type { Evaluation } from "../domain/evaluation.js";
 import type { Outcome } from "../domain/outcome.js";
@@ -23,6 +31,8 @@ export interface DuplicateUsernameScenarioResult {
   intent: EngineeringIntent;
   workflow: Workflow;
   contribution: Contribution;
+  contributorProfile: ContributorProfile;
+  selectedContributor: Contributor;
   runResult: ContributionRunResult;
   evaluation: Evaluation;
   outcome: Outcome;
@@ -31,7 +41,34 @@ export interface DuplicateUsernameScenarioResult {
 export interface DuplicateUsernameScenarioOptions {
   requestedTarget?: string;
   requestedCapabilityId?: string;
-  contributorExecutor?: ContributorExecutor;
+  candidates?: ContributorCandidate[];
+}
+
+function defaultContributorCandidates(): ContributorCandidate[] {
+  return [
+    {
+      contributor: {
+        id: "local-automation",
+        type: "automation",
+        capabilityIds: ["source.write"],
+        available: true,
+        provider: "reference-local",
+      },
+      executor: new DeterministicContributorExecutor(
+        new DeterministicExecutor()
+      ),
+    },
+    {
+      contributor: {
+        id: "simulated-contributor",
+        type: "external-service",
+        capabilityIds: ["source.write"],
+        available: true,
+        provider: "reference-simulated",
+      },
+      executor: new SimulatedContributorExecutor(),
+    },
+  ];
 }
 
 export function runDuplicateUsernameReferenceScenario(
@@ -124,6 +161,20 @@ export function runDuplicateUsernameReferenceScenario(
     ],
   };
 
+  const contributorProfile: ContributorProfile = {
+    id: "implementer",
+    role: "implementer",
+    responsibilities: [
+      "Perform bounded source implementation.",
+    ],
+    allowedCapabilityIds: ["source.write"],
+    requiredPolicyIds: ["source-scope"],
+    preferredContributorTypes: [
+      "automation",
+      "external-service",
+    ],
+  };
+
   const sourceScopePolicy: Policy = {
     id: "source-scope",
     rule:
@@ -134,16 +185,30 @@ export function runDuplicateUsernameReferenceScenario(
     severity: "high",
   };
 
-  const contributorExecutor =
-    options.contributorExecutor ??
-    new DeterministicContributorExecutor(
-      new DeterministicExecutor()
+  const strategy =
+    new DeterministicContributionStrategy();
+
+  const selection = strategy.select({
+    contribution,
+    contributorProfile,
+    candidates:
+      options.candidates ??
+      defaultContributorCandidates(),
+  });
+
+  if (!selection.selected) {
+    throw new Error(
+      `Unable to select contributor: ${selection.reason}`
     );
+  }
+
+  const selectedContributor =
+    selection.candidate.contributor;
 
   const runner = new ContributionRunner(
     new DeterministicPolicyEngine(),
     new InMemoryEvidenceRecorder(),
-    contributorExecutor
+    selection.candidate.executor
   );
 
   const runResult = runner.run({
@@ -198,6 +263,8 @@ export function runDuplicateUsernameReferenceScenario(
     intent,
     workflow,
     contribution,
+    contributorProfile,
+    selectedContributor,
     runResult,
     evaluation,
     outcome,
