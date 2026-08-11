@@ -31,7 +31,7 @@ const sourceScopePolicy: Policy = {
 };
 
 describe("ContributionRunner", () => {
-  it("executes a contribution after capability and policy checks allow the action", () => {
+  it("executes a contribution and records execution evidence after governance allows it", () => {
     const executor = new DeterministicExecutor();
 
     const executeSpy = vi.spyOn(executor, "execute");
@@ -58,21 +58,33 @@ describe("ContributionRunner", () => {
       capabilityId: "source.write",
     });
 
-    expect(result.evidence).toHaveLength(2);
+    expect(result.evidence).toHaveLength(3);
 
-    expect(result.evidence[0]?.type).toBe("capability-result");
+    expect(result.evidence[0]?.type).toBe(
+      "capability-result"
+    );
     expect(result.evidence[0]?.metadata).toMatchObject({
       capabilityId: "source.write",
       granted: true,
     });
 
-    expect(result.evidence[1]?.type).toBe("policy-result");
+    expect(result.evidence[1]?.type).toBe(
+      "policy-result"
+    );
     expect(result.evidence[1]?.metadata).toMatchObject({
       allowed: true,
     });
+
+    expect(result.evidence[2]?.type).toBe(
+      "command-output"
+    );
+    expect(result.evidence[2]?.metadata).toMatchObject({
+      capabilityId: "source.write",
+      status: "succeeded",
+    });
   });
 
-  it("never reaches execution when policy blocks the action", () => {
+  it("never reaches execution or records execution evidence when policy blocks the action", () => {
     const executor = new DeterministicExecutor();
 
     const executeSpy = vi.spyOn(executor, "execute");
@@ -93,25 +105,35 @@ describe("ContributionRunner", () => {
     expect(result.status).toBe("blocked");
 
     expect(executeSpy).not.toHaveBeenCalled();
-
     expect(result.execution).toBeUndefined();
 
     expect(result.evidence).toHaveLength(2);
 
-    expect(result.evidence[0]?.type).toBe("capability-result");
+    expect(result.evidence[0]?.type).toBe(
+      "capability-result"
+    );
     expect(result.evidence[0]?.metadata).toMatchObject({
       capabilityId: "source.write",
       granted: true,
     });
 
-    expect(result.evidence[1]?.type).toBe("policy-result");
+    expect(result.evidence[1]?.type).toBe(
+      "policy-result"
+    );
     expect(result.evidence[1]?.metadata).toMatchObject({
       allowed: false,
       action: "deny",
     });
+
+    expect(
+      result.evidence.some(
+        (evidence) =>
+          evidence.type === "command-output"
+      )
+    ).toBe(false);
   });
 
-  it("blocks execution when the requested capability is not granted", () => {
+  it("blocks execution and records only capability evidence when the capability is not granted", () => {
     const executor = new DeterministicExecutor();
 
     const executeSpy = vi.spyOn(executor, "execute");
@@ -132,17 +154,25 @@ describe("ContributionRunner", () => {
     expect(result.status).toBe("blocked");
 
     expect(executeSpy).not.toHaveBeenCalled();
-
     expect(result.execution).toBeUndefined();
 
     expect(result.evidence).toHaveLength(1);
 
-    expect(result.evidence[0]?.type).toBe("capability-result");
+    expect(result.evidence[0]?.type).toBe(
+      "capability-result"
+    );
     expect(result.evidence[0]?.metadata).toMatchObject({
       capabilityId: "deployment.execute",
       granted: false,
       reason:
         "Capability is not granted to this contribution.",
     });
+
+    expect(
+      result.evidence.some(
+        (evidence) =>
+          evidence.type === "command-output"
+      )
+    ).toBe(false);
   });
 });

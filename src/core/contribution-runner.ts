@@ -76,10 +76,13 @@ export class ContributionRunner {
     );
 
     const policyEvidence = decisions.map((decision) =>
-      this.evidenceRecorder.recordPolicyDecision(context, decision)
+      this.evidenceRecorder.recordPolicyDecision(
+        context,
+        decision
+      )
     );
 
-    const evidence = [
+    const preExecutionEvidence = [
       capabilityEvidence,
       ...policyEvidence,
     ];
@@ -92,7 +95,7 @@ export class ContributionRunner {
       return {
         status: "blocked",
         contributionId: request.contribution.id,
-        evidence,
+        evidence: preExecutionEvidence,
       };
     }
 
@@ -104,13 +107,21 @@ export class ContributionRunner {
         : {}),
     });
 
+    const executionEvidence =
+      this.evidenceRecorder.recordExecutionResult(
+        execution
+      );
+
     return {
       status:
         execution.status === "succeeded"
           ? "executed"
           : "execution-failed",
       contributionId: request.contribution.id,
-      evidence,
+      evidence: [
+        ...preExecutionEvidence,
+        executionEvidence,
+      ],
       execution,
     };
   }
