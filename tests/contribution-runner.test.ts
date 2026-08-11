@@ -1,7 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { ContributionRunner } from "../src/core/contribution-runner.js";
 import { InMemoryEvidenceRecorder } from "../src/core/evidence-recorder.js";
+import { DeterministicExecutor } from "../src/core/executor.js";
 import { DeterministicPolicyEngine } from "../src/core/policy-engine.js";
 
 import type { Contribution } from "../src/domain/contribution.js";
@@ -17,7 +18,7 @@ const contribution: Contribution = {
   capabilityIds: ["source.write"],
   policyIds: ["source-scope"],
   evidenceRequirements: ["policy-result"],
-  completionCriteria: ["policy evaluation completed"],
+  completionCriteria: ["execution completed"],
 };
 
 const sourceScopePolicy: Policy = {
@@ -30,10 +31,15 @@ const sourceScopePolicy: Policy = {
 };
 
 describe("ContributionRunner", () => {
-  it("allows a contribution when all policies allow the requested action", () => {
+  it("executes a contribution after policy allows the action", () => {
+    const executor = new DeterministicExecutor();
+
+    const executeSpy = vi.spyOn(executor, "execute");
+
     const runner = new ContributionRunner(
       new DeterministicPolicyEngine(),
-      new InMemoryEvidenceRecorder()
+      new InMemoryEvidenceRecorder(),
+      executor
     );
 
     const result = runner.run({
@@ -43,19 +49,30 @@ describe("ContributionRunner", () => {
       requestedTarget: "src/domain/work-item.ts",
     });
 
-    expect(result.status).toBe("allowed");
-    expect(result.contributionId).toBe("contribution-001");
+    expect(result.status).toBe("executed");
+    expect(executeSpy).toHaveBeenCalledOnce();
+
+    expect(result.execution).toMatchObject({
+      status: "succeeded",
+      contributionId: "contribution-001",
+      capabilityId: "source.write",
+    });
+
     expect(result.evidence).toHaveLength(1);
-    expect(result.evidence[0]?.type).toBe("policy-result");
     expect(result.evidence[0]?.metadata).toMatchObject({
       allowed: true,
     });
   });
 
-  it("blocks a contribution when any policy denies the requested action", () => {
+  it("never reaches execution when policy blocks the action", () => {
+    const executor = new DeterministicExecutor();
+
+    const executeSpy = vi.spyOn(executor, "execute");
+
     const runner = new ContributionRunner(
       new DeterministicPolicyEngine(),
-      new InMemoryEvidenceRecorder()
+      new InMemoryEvidenceRecorder(),
+      executor
     );
 
     const result = runner.run({
@@ -66,6 +83,11 @@ describe("ContributionRunner", () => {
     });
 
     expect(result.status).toBe("blocked");
+
+    expect(executeSpy).not.toHaveBeenCalled();
+
+    expect(result.execution).toBeUndefined();
+
     expect(result.evidence).toHaveLength(1);
     expect(result.evidence[0]?.metadata).toMatchObject({
       allowed: false,
