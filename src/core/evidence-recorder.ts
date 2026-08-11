@@ -3,6 +3,7 @@ import type {
   PolicyContext,
   PolicyDecision,
 } from "../domain/policy.js";
+import type { ExecutionResult } from "./executor.js";
 
 export interface CapabilityDecision {
   contributionId: string;
@@ -19,6 +20,10 @@ export interface EvidenceRecorder {
 
   recordCapabilityDecision(
     decision: CapabilityDecision
+  ): Evidence;
+
+  recordExecutionResult(
+    result: ExecutionResult
   ): Evidence;
 }
 
@@ -64,6 +69,24 @@ export class InMemoryEvidenceRecorder implements EvidenceRecorder {
         ...(decision.reason !== undefined
           ? { reason: decision.reason }
           : {}),
+      },
+    };
+  }
+
+  recordExecutionResult(
+    result: ExecutionResult
+  ): Evidence {
+    return {
+      id: crypto.randomUUID(),
+      contributionId: result.contributionId,
+      type: "command-output",
+      timestamp: new Date().toISOString(),
+      contentReference: `execution:${result.contributionId}`,
+      producer: "executor",
+      metadata: {
+        capabilityId: result.capabilityId,
+        status: result.status,
+        summary: result.summary,
       },
     };
   }
