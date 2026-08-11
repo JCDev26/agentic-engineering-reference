@@ -59,4 +59,26 @@ describe("InMemoryEvidenceRecorder", () => {
       action: "deny",
     });
   });
+
+  it("records evidence for a denied capability request", () => {
+    const evidence = recorder.recordCapabilityDecision({
+      contributionId: "contribution-001",
+      capabilityId: "deployment.execute",
+      granted: false,
+      reason: "Capability is not granted to this contribution.",
+    });
+  
+    expect(evidence.contributionId).toBe("contribution-001");
+    expect(evidence.type).toBe("capability-result");
+    expect(evidence.contentReference).toBe(
+      "capability:deployment.execute"
+    );
+    expect(evidence.producer).toBe("contribution-runner");
+  
+    expect(evidence.metadata).toMatchObject({
+      capabilityId: "deployment.execute",
+      granted: false,
+      reason: "Capability is not granted to this contribution.",
+    });
+  });
 });

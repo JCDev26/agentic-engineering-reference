@@ -8,6 +8,7 @@ export type EvidenceType =
   | "recording"
   | "command-output"
   | "policy-result"
+  | "capability-result"
   | "approval"
   | "handoff"
   | "evaluation-result";
