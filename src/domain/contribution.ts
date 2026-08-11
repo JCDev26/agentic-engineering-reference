@@ -1,7 +1,5 @@
 // src/domain/contribution.ts
 
-import type { Capability } from "./capability";
-
 export interface Contribution {
   id: string;
   workflowId: string;

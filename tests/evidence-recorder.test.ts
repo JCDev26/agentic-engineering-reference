@@ -1,0 +1,62 @@
+import { describe, expect, it } from "vitest";
+
+import { InMemoryEvidenceRecorder } from "../src/core/evidence-recorder.js";
+import type {
+  PolicyContext,
+  PolicyDecision,
+} from "../src/domain/policy.js";
+
+describe("InMemoryEvidenceRecorder", () => {
+  const recorder = new InMemoryEvidenceRecorder();
+
+  it("records evidence for an allowed policy decision", () => {
+    const context: PolicyContext = {
+      contributionId: "contribution-001",
+      requestedCapabilityId: "source.write",
+      requestedTarget: "src/domain/work-item.ts",
+    };
+
+    const decision: PolicyDecision = {
+      allowed: true,
+      policyId: "source-scope",
+    };
+
+    const evidence = recorder.recordPolicyDecision(context, decision);
+
+    expect(evidence.contributionId).toBe("contribution-001");
+    expect(evidence.type).toBe("policy-result");
+    expect(evidence.contentReference).toBe("policy:source-scope");
+    expect(evidence.producer).toBe("deterministic-policy-engine");
+
+    expect(evidence.metadata).toMatchObject({
+      requestedCapabilityId: "source.write",
+      requestedTarget: "src/domain/work-item.ts",
+      allowed: true,
+    });
+  });
+
+  it("records denial details for a denied policy decision", () => {
+    const context: PolicyContext = {
+      contributionId: "contribution-001",
+      requestedCapabilityId: "source.write",
+      requestedTarget: "README.md",
+    };
+
+    const decision: PolicyDecision = {
+      allowed: false,
+      policyId: "source-scope",
+      reason: "Requested target is outside policy scope.",
+      action: "deny",
+    };
+
+    const evidence = recorder.recordPolicyDecision(context, decision);
+
+    expect(evidence.metadata).toMatchObject({
+      requestedCapabilityId: "source.write",
+      requestedTarget: "README.md",
+      allowed: false,
+      reason: "Requested target is outside policy scope.",
+      action: "deny",
+    });
+  });
+});

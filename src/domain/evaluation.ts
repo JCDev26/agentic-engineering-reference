@@ -1,6 +1,6 @@
 // src/domain/evaluation.ts
 
-import type { Evidence } from "./evidence";
+import type { Evidence } from "./evidence.js";
 
 export type EvaluationResult =
   | "passed"

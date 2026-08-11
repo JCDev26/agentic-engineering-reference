@@ -1,0 +1,31 @@
+{
+  "name": "agentic-engineering-reference",
+  "version": "1.0.0",
+  "description": "A reference architecture for engineering contribution systems that coordinate humans, automation, pipelines, external services, and AI through shared workflows, governance, evidence, and review.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JCDev26/agentic-engineering-reference.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/JCDev26/agentic-engineering-reference/issues"
+  },
+  "homepage": "https://github.com/JCDev26/agentic-engineering-reference#readme",
+  "devDependencies": {
+    "@types/node": "^26.2.0",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10"
+  }
+}
