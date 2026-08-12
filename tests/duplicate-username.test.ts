@@ -8,6 +8,8 @@ import type { ContributorCandidate } from "../src/core/contribution-strategy.js"
 import { DeterministicExecutor } from "../src/core/executor.js";
 import { runDuplicateUsernameReferenceScenario } from "../src/scenarios/duplicate-username.js";
 
+import type { UserCreator } from "../src/reference-app/create-user.js";
+
 function deterministicCandidate(): ContributorCandidate {
   return {
     contributor: {
@@ -17,9 +19,10 @@ function deterministicCandidate(): ContributorCandidate {
       available: true,
       provider: "reference-local",
     },
-    executor: new DeterministicContributorExecutor(
-      new DeterministicExecutor()
-    ),
+    executor:
+      new DeterministicContributorExecutor(
+        new DeterministicExecutor()
+      ),
   };
 }
 
@@ -36,8 +39,20 @@ function simulatedCandidate(): ContributorCandidate {
   };
 }
 
+const brokenUserCreator: UserCreator = (
+  store,
+  username
+) => {
+  store.add(username);
+
+  return {
+    username,
+    created: true,
+  };
+};
+
 describe("Reference Scenario 001: Prevent Duplicate Usernames", () => {
-  it("selects a contributor and produces a completed governed outcome", () => {
+  it("produces a completed outcome when governed execution satisfies engineering acceptance criteria", () => {
     const result =
       runDuplicateUsernameReferenceScenario();
 
@@ -57,20 +72,37 @@ describe("Reference Scenario 001: Prevent Duplicate Usernames", () => {
       "local-automation"
     );
 
-    expect(result.runResult.status).toBe("executed");
+    expect(result.runResult.status).toBe(
+      "executed"
+    );
 
     expect(
-      result.runResult.evidence.map(
+      result.evidence.map(
         (evidence) => evidence.type
       )
     ).toEqual([
       "capability-result",
       "policy-result",
       "command-output",
+      "test-result",
     ]);
 
-    expect(result.evaluation.result).toBe("passed");
-    expect(result.outcome.status).toBe("completed");
+    expect(
+      result.evidence[3]?.metadata
+    ).toMatchObject({
+      status: "passed",
+      uniqueCreationPassed: true,
+      duplicateRejectionPassed: true,
+      subsequentValidCreationPassed: true,
+    });
+
+    expect(result.evaluation.result).toBe(
+      "passed"
+    );
+
+    expect(result.outcome.status).toBe(
+      "completed"
+    );
   });
 
   it("produces a failed outcome when policy prevents execution", () => {
@@ -79,17 +111,31 @@ describe("Reference Scenario 001: Prevent Duplicate Usernames", () => {
         requestedTarget: "README.md",
       });
 
-    expect(result.runResult.status).toBe("blocked");
+    expect(result.runResult.status).toBe(
+      "blocked"
+    );
 
     expect(
-      result.runResult.evidence.some(
+      result.evidence.some(
         (evidence) =>
           evidence.type === "command-output"
       )
     ).toBe(false);
 
-    expect(result.evaluation.result).toBe("failed");
-    expect(result.outcome.status).toBe("failed");
+    expect(
+      result.evidence.some(
+        (evidence) =>
+          evidence.type === "test-result"
+      )
+    ).toBe(false);
+
+    expect(result.evaluation.result).toBe(
+      "failed"
+    );
+
+    expect(result.outcome.status).toBe(
+      "failed"
+    );
   });
 
   it("produces a failed outcome when the contribution lacks the requested capability", () => {
@@ -99,19 +145,26 @@ describe("Reference Scenario 001: Prevent Duplicate Usernames", () => {
           "deployment.execute",
       });
 
-    expect(result.runResult.status).toBe("blocked");
+    expect(result.runResult.status).toBe(
+      "blocked"
+    );
 
-    expect(result.runResult.evidence).toHaveLength(1);
+    expect(result.evidence).toHaveLength(1);
 
     expect(
-      result.runResult.evidence[0]?.metadata
+      result.evidence[0]?.metadata
     ).toMatchObject({
       capabilityId: "deployment.execute",
       granted: false,
     });
 
-    expect(result.evaluation.result).toBe("failed");
-    expect(result.outcome.status).toBe("failed");
+    expect(result.evaluation.result).toBe(
+      "failed"
+    );
+
+    expect(result.outcome.status).toBe(
+      "failed"
+    );
   });
 
   it("preserves engineering contracts when contributor selection changes", () => {
@@ -149,18 +202,62 @@ describe("Reference Scenario 001: Prevent Duplicate Usernames", () => {
 
     expect(
       deterministicResult.contributorProfile
-    ).toEqual(simulatedResult.contributorProfile);
+    ).toEqual(
+      simulatedResult.contributorProfile
+    );
 
     expect(
       deterministicResult.evaluation.result
-    ).toBe(simulatedResult.evaluation.result);
+    ).toBe(
+      simulatedResult.evaluation.result
+    );
 
     expect(
       deterministicResult.outcome.status
-    ).toBe(simulatedResult.outcome.status);
+    ).toBe(
+      simulatedResult.outcome.status
+    );
 
     expect(
       deterministicResult.outcome.status
     ).toBe("completed");
+  });
+
+  it("fails the engineering outcome even when execution succeeds if acceptance criteria are not satisfied", () => {
+    const result =
+      runDuplicateUsernameReferenceScenario({
+        userCreator: brokenUserCreator,
+      });
+
+    expect(result.runResult.status).toBe(
+      "executed"
+    );
+
+    expect(
+      result.runResult.execution?.status
+    ).toBe("succeeded");
+
+    const validationEvidence =
+      result.evidence.find(
+        (evidence) =>
+          evidence.type === "test-result"
+      );
+
+    expect(validationEvidence).toBeDefined();
+
+    expect(
+      validationEvidence?.metadata
+    ).toMatchObject({
+      status: "failed",
+      duplicateRejectionPassed: false,
+    });
+
+    expect(result.evaluation.result).toBe(
+      "failed"
+    );
+
+    expect(result.outcome.status).toBe(
+      "failed"
+    );
   });
 });

@@ -1,3 +1,4 @@
+import { DuplicateUsernameAcceptanceValidator } from "../core/acceptance-validator.js";
 import { ContributionRunner } from "../core/contribution-runner.js";
 import {
   DeterministicContributorExecutor,
@@ -21,10 +22,16 @@ import type {
 } from "../domain/contributor.js";
 import type { EngineeringIntent } from "../domain/engineering-intent.js";
 import type { Evaluation } from "../domain/evaluation.js";
+import type { Evidence } from "../domain/evidence.js";
 import type { Outcome } from "../domain/outcome.js";
 import type { Policy } from "../domain/policy.js";
 import type { WorkItem } from "../domain/work-item.js";
 import type { Workflow } from "../domain/workflow.js";
+
+import {
+  createUser,
+  type UserCreator,
+} from "../reference-app/create-user.js";
 
 export interface DuplicateUsernameScenarioResult {
   workItem: WorkItem;
@@ -34,6 +41,7 @@ export interface DuplicateUsernameScenarioResult {
   contributorProfile: ContributorProfile;
   selectedContributor: Contributor;
   runResult: ContributionRunResult;
+  evidence: Evidence[];
   evaluation: Evaluation;
   outcome: Outcome;
 }
@@ -42,6 +50,7 @@ export interface DuplicateUsernameScenarioOptions {
   requestedTarget?: string;
   requestedCapabilityId?: string;
   candidates?: ContributorCandidate[];
+  userCreator?: UserCreator;
 }
 
 function defaultContributorCandidates(): ContributorCandidate[] {
@@ -54,9 +63,10 @@ function defaultContributorCandidates(): ContributorCandidate[] {
         available: true,
         provider: "reference-local",
       },
-      executor: new DeterministicContributorExecutor(
-        new DeterministicExecutor()
-      ),
+      executor:
+        new DeterministicContributorExecutor(
+          new DeterministicExecutor()
+        ),
     },
     {
       contributor: {
@@ -88,12 +98,15 @@ export function runDuplicateUsernameReferenceScenario(
       "No unrelated refactoring is introduced.",
     ],
     validationRequirements: [
-      "Governed execution completes successfully.",
+      "Unique username creation succeeds.",
+      "Duplicate username creation is rejected.",
+      "Valid creation continues to work after duplicate rejection.",
     ],
     evidenceRequirements: [
       "capability-result",
       "policy-result",
       "command-output",
+      "test-result",
     ],
     riskLevel: "low",
     nonGoals: [
@@ -128,15 +141,16 @@ export function runDuplicateUsernameReferenceScenario(
           "capability-result",
           "policy-result",
           "command-output",
+          "test-result",
         ],
         completionCriteria: [
           "Governed execution completes.",
-          "Required evidence is available.",
+          "Required engineering validation passes.",
         ],
       },
     ],
     completionCriteria: [
-      "Required contribution evidence satisfies evaluation requirements.",
+      "Required contribution evidence satisfies engineering evaluation requirements.",
     ],
   };
 
@@ -154,10 +168,12 @@ export function runDuplicateUsernameReferenceScenario(
       "capability-result",
       "policy-result",
       "command-output",
+      "test-result",
     ],
     completionCriteria: [
       "Execution completes successfully.",
-      "Required evidence is produced.",
+      "Duplicate username validation passes.",
+      "Existing valid behavior remains functional.",
     ],
   };
 
@@ -215,11 +231,26 @@ export function runDuplicateUsernameReferenceScenario(
     contribution,
     policies: [sourceScopePolicy],
     requestedCapabilityId:
-      options.requestedCapabilityId ?? "source.write",
+      options.requestedCapabilityId ??
+      "source.write",
     requestedTarget:
       options.requestedTarget ??
-      "src/user-management/create-user.ts",
+      "src/reference-app/create-user.ts",
   });
+
+  const validationEvidence: Evidence[] =
+    runResult.status === "executed"
+      ? [
+          new DuplicateUsernameAcceptanceValidator(
+            options.userCreator ?? createUser
+          ).validate(contribution.id),
+        ]
+      : [];
+
+  const evidence = [
+    ...runResult.evidence,
+    ...validationEvidence,
+  ];
 
   const evaluator = new DeterministicEvaluator();
 
@@ -246,8 +277,17 @@ export function runDuplicateUsernameReferenceScenario(
           status: "succeeded",
         },
       },
+      {
+        type: "test-result",
+        metadata: {
+          status: "passed",
+          uniqueCreationPassed: true,
+          duplicateRejectionPassed: true,
+          subsequentValidCreationPassed: true,
+        },
+      },
     ],
-    evidence: runResult.evidence,
+    evidence,
   });
 
   const outcomeResolver =
@@ -266,6 +306,7 @@ export function runDuplicateUsernameReferenceScenario(
     contributorProfile,
     selectedContributor,
     runResult,
+    evidence,
     evaluation,
     outcome,
   };

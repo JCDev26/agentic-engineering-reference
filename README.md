@@ -500,16 +500,23 @@ Initial milestones:
 - [x] Define project purpose
 - [x] Establish contributor- and vendor-neutral principles
 - [x] Define the initial reference flow
-- [x] Establish the first architecture decision
-- [ ] Separate engineering intent from engineering contribution
-- [ ] Formalize core contracts
-- [ ] Define contribution strategies
-- [ ] Define governance and execution boundaries
-- [ ] Define evidence and evaluation models
-- [ ] Build a minimal reference implementation
-- [ ] Add an isolated execution example
-- [ ] Add an SDLC integration example
-- [ ] Demonstrate multiple contributor types against the same workflow
+- [x] Establish foundational architecture decisions
+- [x] Separate engineering intent from engineering contribution
+- [x] Formalize core engineering contracts
+- [x] Implement deterministic governance
+- [x] Implement bounded capability authorization
+- [x] Capture structured governance and execution evidence
+- [x] Implement deterministic evidence evaluation
+- [x] Resolve evaluations into workflow outcomes
+- [x] Demonstrate contributor substitutability
+- [x] Implement contributor selection strategy
+- [x] Validate engineering outcomes against acceptance criteria
+- [ ] Execute multi-stage workflows
+- [ ] Implement handoffs between contributors
+- [ ] Introduce approval boundaries
+- [ ] Add an isolated execution environment
+- [ ] Add an SDLC platform adapter
+- [ ] Demonstrate multiple real contributor technologies
 
 ---
 
