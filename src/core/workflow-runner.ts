@@ -33,6 +33,11 @@ export type WorkflowRunStatus =
   | "completed"
   | "failed";
 
+export type WorkflowFailureReason =
+  | "stage-failed"
+  | "missing-stage-binding"
+  | "dependency-deadlock";
+
 export interface WorkflowRunResult {
   workflowId: string;
   status: WorkflowRunStatus;
@@ -40,6 +45,8 @@ export interface WorkflowRunResult {
   evidence: Evidence[];
   handoffs: Handoff[];
   failedStageId?: string;
+  failureReason?: WorkflowFailureReason;
+  unresolvedStageIds?: string[];
 }
 
 export class DeterministicWorkflowRunner {
@@ -50,95 +57,133 @@ export class DeterministicWorkflowRunner {
     const completedStageIds: string[] = [];
     const evidence: Evidence[] = [];
     const handoffs: Handoff[] = [];
+    const remainingStages = [...workflow.stages];
 
-    for (const stage of workflow.stages) {
-      const dependenciesSatisfied =
-        stage.dependencies.every(
-          (dependencyId) =>
-            completedStageIds.includes(dependencyId)
-        );
-
-      if (!dependenciesSatisfied) {
-        return {
-          workflowId: workflow.id,
-          status: "failed",
-          completedStageIds,
-          evidence,
-          handoffs,
-          failedStageId: stage.id,
-        };
-      }
-
-      const binding = bindings.find(
-        (candidate) =>
-          candidate.stageId === stage.id
+    while (remainingStages.length > 0) {
+      const readyStages = remainingStages.filter(
+        (stage) =>
+          stage.dependencies.every(
+            (dependencyId) =>
+              completedStageIds.includes(
+                dependencyId
+              )
+          )
       );
 
-      if (binding === undefined) {
+      if (readyStages.length === 0) {
         return {
           workflowId: workflow.id,
           status: "failed",
           completedStageIds,
           evidence,
           handoffs,
-          failedStageId: stage.id,
+          failureReason:
+            "dependency-deadlock",
+          unresolvedStageIds:
+            remainingStages.map(
+              (stage) => stage.id
+            ),
         };
       }
 
-      const incomingHandoffs =
-        handoffs.filter(
-          (handoff) =>
-            handoff.toStageId === stage.id
+      for (const stage of readyStages) {
+        const binding = bindings.find(
+          (candidate) =>
+            candidate.stageId === stage.id
         );
 
-      const stageResult =
-        binding.handler.execute(
-          incomingHandoffs
-        );
+        if (binding === undefined) {
+          return {
+            workflowId: workflow.id,
+            status: "failed",
+            completedStageIds,
+            evidence,
+            handoffs,
+            failedStageId: stage.id,
+            failureReason:
+              "missing-stage-binding",
+          };
+        }
 
-      if (stageResult.stageId !== stage.id) {
-        throw new Error(
-          `Stage handler returned "${stageResult.stageId}" while executing "${stage.id}".`
-        );
-      }
-
-      evidence.push(...stageResult.evidence);
-
-      if (stageResult.status === "failed") {
-        return {
-          workflowId: workflow.id,
-          status: "failed",
-          completedStageIds,
-          evidence,
-          handoffs,
-          failedStageId: stage.id,
-        };
-      }
-
-      completedStageIds.push(stage.id);
-
-      const downstreamStages =
-        this.findDependentStages(
-          workflow.stages,
-          stage.id
-        );
-
-      for (
-        const downstreamStage of downstreamStages
-      ) {
-        const handoff =
-          this.createHandoff(
-            workflow.id,
-            stage,
-            downstreamStage,
-            stageResult
+        const incomingHandoffs =
+          handoffs.filter(
+            (handoff) =>
+              handoff.toStageId === stage.id
           );
 
-        handoffs.push(handoff);
+        const stageResult =
+          binding.handler.execute(
+            incomingHandoffs
+          );
+
+        if (
+          stageResult.stageId !== stage.id
+        ) {
+          throw new Error(
+            `Stage handler returned "${stageResult.stageId}" while executing "${stage.id}".`
+          );
+        }
 
         evidence.push(
-          this.createHandoffEvidence(handoff)
+          ...stageResult.evidence
         );
+
+        if (
+          stageResult.status === "failed"
+        ) {
+          return {
+            workflowId: workflow.id,
+            status: "failed",
+            completedStageIds,
+            evidence,
+            handoffs,
+            failedStageId: stage.id,
+            failureReason:
+              "stage-failed",
+          };
+        }
+
+        completedStageIds.push(stage.id);
+
+        const downstreamStages =
+          this.findDependentStages(
+            workflow.stages,
+            stage.id
+          );
+
+        for (
+          const downstreamStage
+          of downstreamStages
+        ) {
+          const handoff =
+            this.createHandoff(
+              workflow.id,
+              stage,
+              downstreamStage,
+              stageResult
+            );
+
+          handoffs.push(handoff);
+
+          evidence.push(
+            this.createHandoffEvidence(
+              handoff
+            )
+          );
+        }
+
+        const stageIndex =
+          remainingStages.findIndex(
+            (candidate) =>
+              candidate.id === stage.id
+          );
+
+        if (stageIndex >= 0) {
+          remainingStages.splice(
+            stageIndex,
+            1
+          );
+        }
       }
     }
 
@@ -175,7 +220,8 @@ export class DeterministicWorkflowRunner {
       toStageId: toStage.id,
       fromContributionId:
         result.contributionId,
-      timestamp: new Date().toISOString(),
+      timestamp:
+        new Date().toISOString(),
       summary:
         `Handoff from ${fromStage.id} to ${toStage.id}.`,
       evidence: result.evidence,
@@ -198,8 +244,10 @@ export class DeterministicWorkflowRunner {
       producer:
         "deterministic-workflow-runner",
       metadata: {
-        fromStageId: handoff.fromStageId,
-        toStageId: handoff.toStageId,
+        fromStageId:
+          handoff.fromStageId,
+        toStageId:
+          handoff.toStageId,
         artifactReferences:
           handoff.artifactReferences,
       },
