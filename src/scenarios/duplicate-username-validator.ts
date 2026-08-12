@@ -32,15 +32,34 @@ export class DuplicateUsernameAcceptanceValidator
     contributionId: string,
     execution: ExecutionResult
   ): Evidence {
+    const artifactReferences =
+      execution.artifacts?.map(
+        (artifact) =>
+          artifact.contentReference
+      ) ?? [];
+
+    return this.validateArtifactReferences(
+      contributionId,
+      artifactReferences
+    );
+  }
+
+  validateArtifactReferences(
+    contributionId: string,
+    artifactReferences: string[]
+  ): Evidence {
     const userCreator =
-      this.resolveUserCreator(execution);
+      this.resolveUserCreator(
+        artifactReferences
+      );
 
     if (userCreator === undefined) {
       return {
         id: crypto.randomUUID(),
         contributionId,
         type: "test-result",
-        timestamp: new Date().toISOString(),
+        timestamp:
+          new Date().toISOString(),
         contentReference:
           `validation:duplicate-username:${contributionId}`,
         producer:
@@ -49,31 +68,46 @@ export class DuplicateUsernameAcceptanceValidator
           status: "failed",
           uniqueCreationPassed: false,
           duplicateRejectionPassed: false,
-          subsequentValidCreationPassed: false,
+          subsequentValidCreationPassed:
+            false,
           reason:
-            "Execution did not produce a recognized user-creator implementation artifact.",
+            "No recognized user-creator implementation artifact was provided.",
         },
       };
     }
 
-    const store = new InMemoryUserStore([
-      "existing-user",
-    ]);
+    const store =
+      new InMemoryUserStore([
+        "existing-user",
+      ]);
 
     const uniqueCreation =
-      userCreator(store, "new-user");
+      userCreator(
+        store,
+        "new-user"
+      );
 
     const existingUserCountBeforeDuplicate =
-      store.count("existing-user");
+      store.count(
+        "existing-user"
+      );
 
     const duplicateCreation =
-      userCreator(store, "existing-user");
+      userCreator(
+        store,
+        "existing-user"
+      );
 
     const existingUserCountAfterDuplicate =
-      store.count("existing-user");
+      store.count(
+        "existing-user"
+      );
 
     const subsequentValidCreation =
-      userCreator(store, "another-user");
+      userCreator(
+        store,
+        "another-user"
+      );
 
     const uniqueCreationPassed =
       uniqueCreation.created &&
@@ -99,13 +133,15 @@ export class DuplicateUsernameAcceptanceValidator
       id: crypto.randomUUID(),
       contributionId,
       type: "test-result",
-      timestamp: new Date().toISOString(),
+      timestamp:
+        new Date().toISOString(),
       contentReference:
         `validation:duplicate-username:${contributionId}`,
       producer:
         "duplicate-username-acceptance-validator",
       metadata: {
-        status: passed ? "passed" : "failed",
+        status:
+          passed ? "passed" : "failed",
         uniqueCreationPassed,
         duplicateRejectionPassed,
         subsequentValidCreationPassed,
@@ -114,29 +150,20 @@ export class DuplicateUsernameAcceptanceValidator
   }
 
   private resolveUserCreator(
-    execution: ExecutionResult
+    artifactReferences: string[]
   ): UserCreator | undefined {
-    const implementation =
-      execution.artifacts?.find(
-        (artifact) =>
-          artifact.type ===
-          "user-creator-implementation"
-      );
-
-    if (implementation === undefined) {
-      return undefined;
-    }
-
     if (
-      implementation.contentReference ===
-      duplicateSafeArtifactReference
+      artifactReferences.includes(
+        duplicateSafeArtifactReference
+      )
     ) {
       return createUser;
     }
 
     if (
-      implementation.contentReference ===
-      duplicateAcceptingArtifactReference
+      artifactReferences.includes(
+        duplicateAcceptingArtifactReference
+      )
     ) {
       return duplicateAcceptingUserCreator;
     }

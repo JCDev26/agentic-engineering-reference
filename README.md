@@ -511,8 +511,8 @@ Initial milestones:
 - [x] Demonstrate contributor substitutability
 - [x] Implement contributor selection strategy
 - [x] Validate engineering outcomes against acceptance criteria
-- [ ] Execute multi-stage workflows
-- [ ] Implement handoffs between contributors
+- [x] Execute multi-stage workflows
+- [x] Implement handoffs between contributors
 - [ ] Introduce approval boundaries
 - [ ] Add an isolated execution environment
 - [ ] Add an SDLC platform adapter

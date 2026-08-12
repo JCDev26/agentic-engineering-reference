@@ -94,7 +94,7 @@ describe("DuplicateUsernameAcceptanceValidator", () => {
     expect(evidence.metadata).toMatchObject({
       status: "failed",
       reason:
-        "Execution did not produce a recognized user-creator implementation artifact.",
+        "No recognized user-creator implementation artifact was provided.",
     });
   });
 });
