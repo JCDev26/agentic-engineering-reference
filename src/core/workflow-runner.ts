@@ -9,6 +9,15 @@ export type WorkflowStageRunStatus =
   | "completed"
   | "failed";
 
+export type WorkflowFailureReason =
+  | "stage-failed"
+  | "missing-stage-binding"
+  | "dependency-deadlock"
+  | "contributor-selection-failed"
+  | "governance-denied"
+  | "execution-failed"
+  | "engineering-validation-failed";
+
 export interface WorkflowStageRunResult {
   stageId: string;
   contributionId: string;
@@ -16,6 +25,7 @@ export interface WorkflowStageRunResult {
   summary: string;
   evidence: Evidence[];
   artifactReferences?: string[];
+  failureReason?: WorkflowFailureReason;
 }
 
 export interface WorkflowStageHandler {
@@ -32,11 +42,6 @@ export interface WorkflowStageBinding {
 export type WorkflowRunStatus =
   | "completed"
   | "failed";
-
-export type WorkflowFailureReason =
-  | "stage-failed"
-  | "missing-stage-binding"
-  | "dependency-deadlock";
 
 export interface WorkflowRunResult {
   workflowId: string;
@@ -139,6 +144,7 @@ export class DeterministicWorkflowRunner {
             handoffs,
             failedStageId: stage.id,
             failureReason:
+              stageResult.failureReason ??
               "stage-failed",
           };
         }

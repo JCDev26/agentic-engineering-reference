@@ -1,91 +1,195 @@
-import { describe, expect, it } from "vitest";
+import {
+  describe,
+  expect,
+  it,
+} from "vitest";
 
 import { DeterministicOutcomeResolver } from "../src/core/outcome-resolver.js";
 
 import type { Evaluation } from "../src/domain/evaluation.js";
 import type { Evidence } from "../src/domain/evidence.js";
+import type { WorkflowRunResult } from "../src/core/workflow-runner.js";
 
 const executionEvidence: Evidence = {
   id: "evidence-execution-001",
   contributionId: "contribution-001",
   type: "command-output",
-  timestamp: "2026-08-11T16:00:00.000Z",
-  contentReference: "execution:contribution-001",
+  timestamp:
+    "2026-08-12T12:00:00.000Z",
+  contentReference:
+    "execution:contribution-001",
   producer: "executor",
   metadata: {
-    capabilityId: "source.write",
     status: "succeeded",
   },
 };
 
+function evaluation(
+  result: "passed" | "failed"
+): Evaluation {
+  return {
+    id: "evaluation-001",
+    targetId: "workflow-001",
+    targetType: "workflow",
+    criteria: [],
+    evidence: [executionEvidence],
+    result,
+    evaluator:
+      "deterministic-evaluator",
+    confidence: 1,
+  };
+}
+
 describe("DeterministicOutcomeResolver", () => {
-  it("resolves a passed evaluation to a completed outcome", () => {
-    const resolver = new DeterministicOutcomeResolver();
+  it("resolves a passed evaluation and completed workflow to a completed outcome", () => {
+    const outcome =
+      new DeterministicOutcomeResolver().resolve({
+        workflowId:
+          "workflow-001",
+        evaluation:
+          evaluation("passed"),
+        workflowRun: {
+          workflowId:
+            "workflow-001",
+          status: "completed",
+          completedStageIds: [
+            "implementation",
+          ],
+          evidence: [
+            executionEvidence,
+          ],
+          handoffs: [],
+        },
+      });
 
-    const evaluation: Evaluation = {
-      id: "evaluation-001",
-      targetId: "contribution-001",
-      targetType: "contribution",
-      criteria: [
-        'Evidence of type "command-output" with status="succeeded" is required.',
-      ],
-      evidence: [executionEvidence],
-      result: "passed",
-      evaluator: "deterministic-evaluator",
-      confidence: 1,
-      findings: [
-        "All evidence requirements are satisfied.",
-      ],
-    };
-
-    const outcome = resolver.resolve({
-      workflowId: "workflow-001",
-      evaluation,
-    });
-
-    expect(outcome.workflowId).toBe("workflow-001");
-    expect(outcome.status).toBe("completed");
-    expect(outcome.evidence).toEqual([
-      executionEvidence,
-    ]);
-
-    expect(outcome.summary).toBe(
-      "Workflow completed with satisfied evaluation criteria."
+    expect(outcome.status).toBe(
+      "completed"
     );
+
+    expect(
+      outcome.reasonCode
+    ).toBeUndefined();
   });
 
-  it("resolves a failed evaluation to a failed outcome", () => {
-    const resolver = new DeterministicOutcomeResolver();
-
-    const evaluation: Evaluation = {
-      id: "evaluation-002",
-      targetId: "contribution-001",
-      targetType: "contribution",
-      criteria: [
-        'Evidence of type "command-output" with status="succeeded" is required.',
+  it("preserves governance denial in the terminal outcome", () => {
+    const workflowRun: WorkflowRunResult = {
+      workflowId:
+        "workflow-001",
+      status: "failed",
+      completedStageIds: [],
+      evidence: [
+        executionEvidence,
       ],
-      evidence: [executionEvidence],
-      result: "failed",
-      evaluator: "deterministic-evaluator",
-      confidence: 1,
-      findings: [
-        "Required execution evidence did not satisfy the evaluation criteria.",
-      ],
+      handoffs: [],
+      failedStageId:
+        "implementation",
+      failureReason:
+        "governance-denied",
     };
 
-    const outcome = resolver.resolve({
-      workflowId: "workflow-001",
-      evaluation,
+    const outcome =
+      new DeterministicOutcomeResolver().resolve({
+        workflowId:
+          "workflow-001",
+        evaluation:
+          evaluation("failed"),
+        workflowRun,
+      });
+
+    expect(outcome).toMatchObject({
+      status: "failed",
+      reasonCode:
+        "governance-denied",
+      failedStageId:
+        "implementation",
+    });
+  });
+
+  it("preserves engineering validation failure in the terminal outcome", () => {
+    const outcome =
+      new DeterministicOutcomeResolver().resolve({
+        workflowId:
+          "workflow-001",
+        evaluation:
+          evaluation("failed"),
+        workflowRun: {
+          workflowId:
+            "workflow-001",
+          status: "failed",
+          completedStageIds: [
+            "implementation",
+          ],
+          evidence: [
+            executionEvidence,
+          ],
+          handoffs: [],
+          failedStageId:
+            "validation",
+          failureReason:
+            "engineering-validation-failed",
+        },
+      });
+
+    expect(outcome).toMatchObject({
+      status: "failed",
+      reasonCode:
+        "engineering-validation-failed",
+      failedStageId:
+        "validation",
+    });
+  });
+
+  it("preserves dependency deadlock without falsely assigning a failed stage", () => {
+    const outcome =
+      new DeterministicOutcomeResolver().resolve({
+        workflowId:
+          "workflow-001",
+        evaluation:
+          evaluation("failed"),
+        workflowRun: {
+          workflowId:
+            "workflow-001",
+          status: "failed",
+          completedStageIds: [],
+          evidence: [],
+          handoffs: [],
+          failureReason:
+            "dependency-deadlock",
+          unresolvedStageIds: [
+            "stage-a",
+            "stage-b",
+          ],
+        },
+      });
+
+    expect(outcome).toMatchObject({
+      status: "failed",
+      reasonCode:
+        "dependency-deadlock",
+      unresolvedStageIds: [
+        "stage-a",
+        "stage-b",
+      ],
     });
 
-    expect(outcome.workflowId).toBe("workflow-001");
-    expect(outcome.status).toBe("failed");
-    expect(outcome.evidence).toEqual([
-      executionEvidence,
-    ]);
+    expect(
+      outcome.failedStageId
+    ).toBeUndefined();
+  });
 
-    expect(outcome.summary).toBe(
-      "Workflow failed because evaluation criteria were not satisfied."
-    );
+  it("falls back to evaluation failure when the workflow itself completed", () => {
+    const outcome =
+      new DeterministicOutcomeResolver().resolve({
+        workflowId:
+          "workflow-001",
+        evaluation:
+          evaluation("failed"),
+      });
+
+    expect(outcome).toMatchObject({
+      status: "failed",
+      reasonCode:
+        "evaluation-failed",
+    });
   });
 });
