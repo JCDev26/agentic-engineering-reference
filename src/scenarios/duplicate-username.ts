@@ -1,16 +1,11 @@
-import { DuplicateUsernameAcceptanceValidator } from "../core/acceptance-validator.js";
+import type { AcceptanceValidator } from "../core/acceptance-validator.js";
 import { ContributionRunner } from "../core/contribution-runner.js";
-import {
-  DeterministicContributorExecutor,
-  SimulatedContributorExecutor,
-} from "../core/contributor-executor.js";
 import {
   DeterministicContributionStrategy,
   type ContributorCandidate,
 } from "../core/contribution-strategy.js";
 import { InMemoryEvidenceRecorder } from "../core/evidence-recorder.js";
 import { DeterministicEvaluator } from "../core/evaluator.js";
-import { DeterministicExecutor } from "../core/executor.js";
 import { DeterministicOutcomeResolver } from "../core/outcome-resolver.js";
 import { DeterministicPolicyEngine } from "../core/policy-engine.js";
 
@@ -29,9 +24,10 @@ import type { WorkItem } from "../domain/work-item.js";
 import type { Workflow } from "../domain/workflow.js";
 
 import {
-  createUser,
-  type UserCreator,
-} from "../reference-app/create-user.js";
+  DuplicateAcceptingUserCreatorContributorExecutor,
+  DuplicateSafeUserCreatorContributorExecutor,
+} from "./duplicate-username-contributors.js";
+import { DuplicateUsernameAcceptanceValidator } from "./duplicate-username-validator.js";
 
 export interface DuplicateUsernameScenarioResult {
   workItem: WorkItem;
@@ -50,34 +46,41 @@ export interface DuplicateUsernameScenarioOptions {
   requestedTarget?: string;
   requestedCapabilityId?: string;
   candidates?: ContributorCandidate[];
-  userCreator?: UserCreator;
+  validator?: AcceptanceValidator;
+}
+
+export function duplicateSafeCandidate(): ContributorCandidate {
+  return {
+    contributor: {
+      id: "duplicate-safe-contributor",
+      type: "automation",
+      capabilityIds: ["source.write"],
+      available: true,
+      provider: "reference-local",
+    },
+    executor:
+      new DuplicateSafeUserCreatorContributorExecutor(),
+  };
+}
+
+export function duplicateAcceptingCandidate(): ContributorCandidate {
+  return {
+    contributor: {
+      id: "duplicate-accepting-contributor",
+      type: "external-service",
+      capabilityIds: ["source.write"],
+      available: true,
+      provider: "reference-simulated",
+    },
+    executor:
+      new DuplicateAcceptingUserCreatorContributorExecutor(),
+  };
 }
 
 function defaultContributorCandidates(): ContributorCandidate[] {
   return [
-    {
-      contributor: {
-        id: "local-automation",
-        type: "automation",
-        capabilityIds: ["source.write"],
-        available: true,
-        provider: "reference-local",
-      },
-      executor:
-        new DeterministicContributorExecutor(
-          new DeterministicExecutor()
-        ),
-    },
-    {
-      contributor: {
-        id: "simulated-contributor",
-        type: "external-service",
-        capabilityIds: ["source.write"],
-        available: true,
-        provider: "reference-simulated",
-      },
-      executor: new SimulatedContributorExecutor(),
-    },
+    duplicateSafeCandidate(),
+    duplicateAcceptingCandidate(),
   ];
 }
 
@@ -238,12 +241,18 @@ export function runDuplicateUsernameReferenceScenario(
       "src/reference-app/create-user.ts",
   });
 
+  const validator =
+    options.validator ??
+    new DuplicateUsernameAcceptanceValidator();
+
   const validationEvidence: Evidence[] =
-    runResult.status === "executed"
+    runResult.status === "executed" &&
+    runResult.execution !== undefined
       ? [
-          new DuplicateUsernameAcceptanceValidator(
-            options.userCreator ?? createUser
-          ).validate(contribution.id),
+          validator.validate(
+            contribution.id,
+            runResult.execution
+          ),
         ]
       : [];
 

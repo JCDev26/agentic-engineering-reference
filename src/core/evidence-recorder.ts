@@ -46,9 +46,9 @@ export class InMemoryEvidenceRecorder implements EvidenceRecorder {
         ...(decision.allowed
           ? {}
           : {
-              reason: decision.reason,
-              action: decision.action,
-            }),
+            reason: decision.reason,
+            action: decision.action,
+          }),
       },
     };
   }
@@ -87,6 +87,10 @@ export class InMemoryEvidenceRecorder implements EvidenceRecorder {
         capabilityId: result.capabilityId,
         status: result.status,
         summary: result.summary,
+        artifactReferences:
+          result.artifacts?.map(
+            (artifact) => artifact.contentReference
+          ) ?? [],
       },
     };
   }

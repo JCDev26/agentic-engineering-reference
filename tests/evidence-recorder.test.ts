@@ -153,4 +153,29 @@ describe("InMemoryEvidenceRecorder", () => {
       summary: "Deterministic execution failed.",
     });
   });
+
+  it("records contributor-produced artifact references in execution evidence", () => {
+    const evidence =
+      recorder.recordExecutionResult({
+        status: "succeeded",
+        contributionId: "contribution-001",
+        capabilityId: "source.write",
+        summary:
+          "Contributor produced an implementation artifact.",
+        artifacts: [
+          {
+            type: "user-creator-implementation",
+            contentReference:
+              "reference-app:user-creator:duplicate-safe",
+          },
+        ],
+      });
+  
+    expect(evidence.metadata).toMatchObject({
+      status: "succeeded",
+      artifactReferences: [
+        "reference-app:user-creator:duplicate-safe",
+      ],
+    });
+  });
 });

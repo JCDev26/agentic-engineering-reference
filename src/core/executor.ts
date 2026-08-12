@@ -1,5 +1,10 @@
 import type { Contribution } from "../domain/contribution.js";
 
+export interface ExecutionArtifact {
+  type: string;
+  contentReference: string;
+}
+
 export interface ExecutionRequest {
   contribution: Contribution;
   capabilityId: string;
@@ -13,6 +18,7 @@ export interface ExecutionResult {
   contributionId: string;
   capabilityId: string;
   summary: string;
+  artifacts?: ExecutionArtifact[];
 }
 
 export interface Executor {
