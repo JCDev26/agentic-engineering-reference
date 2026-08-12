@@ -187,4 +187,140 @@ describe("DeterministicContributionStrategy", () => {
         "Contributor profile does not allow all capabilities granted to the contribution.",
     });
   });
+
+  it("selects a validator contributor that satisfies the validator profile", () => {
+    const strategy =
+      new DeterministicContributionStrategy();
+  
+    const validationContribution: Contribution = {
+      id: "validation-contribution",
+      workflowId: "workflow-001",
+      stageId: "validation",
+      objective:
+        "Validate implementation artifact.",
+      scope: ["reference-app:"],
+      contributorProfileId:
+        "validator",
+      capabilityIds: [
+        "validation.execute",
+      ],
+      policyIds: [
+        "validation-artifact-scope",
+      ],
+      evidenceRequirements: [],
+      completionCriteria: [],
+    };
+  
+    const validatorProfile: ContributorProfile = {
+      id: "validator",
+      role: "validator",
+      responsibilities: [
+        "Validate implementation artifacts.",
+      ],
+      allowedCapabilityIds: [
+        "validation.execute",
+      ],
+      requiredPolicyIds: [
+        "validation-artifact-scope",
+      ],
+    };
+  
+    const validatorCandidate: ContributorCandidate = {
+      contributor: {
+        id: "validator-001",
+        type: "automation",
+        capabilityIds: [
+          "validation.execute",
+        ],
+        available: true,
+      },
+      executor:
+        new SimulatedContributorExecutor(),
+    };
+  
+    const result = strategy.select({
+      contribution:
+        validationContribution,
+      contributorProfile:
+        validatorProfile,
+      candidates: [
+        validatorCandidate,
+      ],
+    });
+  
+    expect(result.selected).toBe(true);
+  
+    if (result.selected) {
+      expect(
+        result.candidate.contributor.id
+      ).toBe("validator-001");
+    }
+  });
+  
+  it("does not treat implementation capability as sufficient for validation selection", () => {
+    const strategy =
+      new DeterministicContributionStrategy();
+  
+    const validationContribution: Contribution = {
+      id: "validation-contribution",
+      workflowId: "workflow-001",
+      stageId: "validation",
+      objective:
+        "Validate implementation artifact.",
+      scope: ["reference-app:"],
+      contributorProfileId:
+        "validator",
+      capabilityIds: [
+        "validation.execute",
+      ],
+      policyIds: [
+        "validation-artifact-scope",
+      ],
+      evidenceRequirements: [],
+      completionCriteria: [],
+    };
+  
+    const validatorProfile: ContributorProfile = {
+      id: "validator",
+      role: "validator",
+      responsibilities: [
+        "Validate implementation artifacts.",
+      ],
+      allowedCapabilityIds: [
+        "validation.execute",
+      ],
+      requiredPolicyIds: [
+        "validation-artifact-scope",
+      ],
+    };
+  
+    const implementationOnlyCandidate: ContributorCandidate = {
+      contributor: {
+        id: "implementation-only",
+        type: "automation",
+        capabilityIds: [
+          "source.write",
+        ],
+        available: true,
+      },
+      executor:
+        new SimulatedContributorExecutor(),
+    };
+  
+    const result = strategy.select({
+      contribution:
+        validationContribution,
+      contributorProfile:
+        validatorProfile,
+      candidates: [
+        implementationOnlyCandidate,
+      ],
+    });
+  
+    expect(result).toEqual({
+      selected: false,
+      reason:
+        "No available contributor satisfies the contribution capability requirements.",
+    });
+  });
 });

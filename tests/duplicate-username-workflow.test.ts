@@ -8,20 +8,95 @@ import {
     duplicateAcceptingCandidate,
     duplicateSafeCandidate,
   } from "../src/scenarios/duplicate-username.js";
-  import { runDuplicateUsernameMultiStageScenario } from "../src/scenarios/duplicate-username-workflow.js";
+  import {
+    duplicateUsernameValidatorCandidate,
+    runDuplicateUsernameMultiStageScenario,
+  } from "../src/scenarios/duplicate-username-workflow.js";
+  
+  import type { ContributorCandidate } from "../src/core/contribution-strategy.js";
+  import { DeterministicContributorExecutor } from "../src/core/contributor-executor.js";
+  import { DeterministicExecutor } from "../src/core/executor.js";
+  
+  function incapableValidatorCandidate(): ContributorCandidate {
+    return {
+      contributor: {
+        id: "incapable-validator",
+        type: "automation",
+        capabilityIds: [
+          "source.read",
+        ],
+        available: true,
+      },
+      executor:
+        new DeterministicContributorExecutor(
+          new DeterministicExecutor()
+        ),
+    };
+  }
   
   describe("Reference Scenario 001 multi-stage workflow", () => {
-    it("completes implementation, handoff, and validation for a correct contributor result", () => {
+    it("selects separate contributors for implementation and validation", () => {
       const result =
         runDuplicateUsernameMultiStageScenario({
           implementationCandidates: [
             duplicateSafeCandidate(),
           ],
+          validationCandidates: [
+            duplicateUsernameValidatorCandidate(),
+          ],
         });
+  
+      expect(
+        result.selectedImplementationContributor.id
+      ).toBe(
+        "duplicate-safe-contributor"
+      );
+  
+      expect(
+        result.selectedValidationContributor.id
+      ).toBe(
+        "duplicate-username-validator"
+      );
+  
+      expect(
+        result.selectedImplementationContributor.id
+      ).not.toBe(
+        result.selectedValidationContributor.id
+      );
+  
+      expect(
+        result.implementationContribution
+          .capabilityIds
+      ).toEqual([
+        "source.write",
+      ]);
+  
+      expect(
+        result.validationContribution
+          .capabilityIds
+      ).toEqual([
+        "validation.execute",
+      ]);
   
       expect(
         result.workflowRun.status
       ).toBe("completed");
+  
+      expect(
+        result.outcome.status
+      ).toBe("completed");
+    });
+  
+    it("completes implementation, handoff, selected validation, and workflow outcome for a correct implementation", () => {
+      const result =
+        runDuplicateUsernameMultiStageScenario({
+          implementationCandidates: [
+            duplicateSafeCandidate(),
+          ],
+          validationCandidates: [
+            duplicateUsernameValidatorCandidate(),
+          ],
+        });
   
       expect(
         result.workflowRun
@@ -35,20 +110,18 @@ import {
         result.workflowRun.handoffs
       ).toHaveLength(1);
   
-      expect(
-        result.workflowRun
-          .handoffs[0]
-          ?.artifactReferences
-      ).toContain(
-        "reference-app:user-creator:duplicate-safe"
-      );
-  
       const validationEvidence =
         result.workflowRun.evidence.find(
           (evidence) =>
             evidence.type ===
             "test-result"
         );
+  
+      expect(
+        validationEvidence?.producer
+      ).toBe(
+        "duplicate-username-validator"
+      );
   
       expect(
         validationEvidence?.metadata
@@ -67,11 +140,14 @@ import {
       ).toBe("completed");
     });
   
-    it("allows implementation to complete and hand off before independent validation rejects a bad contributor result", () => {
+    it("allows a selected validator to reject a bad implementation produced by a different contributor", () => {
       const result =
         runDuplicateUsernameMultiStageScenario({
           implementationCandidates: [
             duplicateAcceptingCandidate(),
+          ],
+          validationCandidates: [
+            duplicateUsernameValidatorCandidate(),
           ],
         });
   
@@ -95,20 +171,18 @@ import {
         result.workflowRun.handoffs
       ).toHaveLength(1);
   
-      expect(
-        result.workflowRun
-          .handoffs[0]
-          ?.artifactReferences
-      ).toContain(
-        "reference-app:user-creator:duplicate-accepting"
-      );
-  
       const validationEvidence =
         result.workflowRun.evidence.find(
           (evidence) =>
             evidence.type ===
             "test-result"
         );
+  
+      expect(
+        validationEvidence?.producer
+      ).toBe(
+        "duplicate-username-validator"
+      );
   
       expect(
         validationEvidence?.metadata
@@ -127,11 +201,29 @@ import {
       ).toBe("failed");
     });
   
-    it("stops before handoff when implementation governance blocks execution", () => {
+    it("rejects workflow construction when no validation contributor satisfies validation capabilities", () => {
+      expect(() =>
+        runDuplicateUsernameMultiStageScenario({
+          implementationCandidates: [
+            duplicateSafeCandidate(),
+          ],
+          validationCandidates: [
+            incapableValidatorCandidate(),
+          ],
+        })
+      ).toThrow(
+        "Unable to select validation contributor: No available contributor satisfies the contribution capability requirements."
+      );
+    });
+  
+    it("still stops before handoff when implementation governance blocks execution", () => {
       const result =
         runDuplicateUsernameMultiStageScenario({
           implementationCandidates: [
             duplicateSafeCandidate(),
+          ],
+          validationCandidates: [
+            duplicateUsernameValidatorCandidate(),
           ],
           implementationTarget:
             "README.md",
