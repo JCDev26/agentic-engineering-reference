@@ -161,6 +161,8 @@ Workflows should validate the intended outcome using appropriate evidence such a
 
 Failure causes should be emitted by the architectural layer that directly observes the failure rather than reconstructed later from downstream evidence.
 
+Absence of engineering-success evidence should not be treated as proof of engineering failure when the workflow never reached the required validation boundary.
+
 ### Incremental Delivery
 
 Contributor orchestration should reinforce good software engineering practices rather than replace them.
@@ -375,6 +377,8 @@ Examples may include:
 
 A task-level assessment of whether the intended engineering outcome was achieved.
 
+Evaluation may also be inconclusive when the workflow does not reach the boundary required to evaluate the engineering result.
+
 ### `Handoff`
 
 The transfer of responsibility, context, or evidence between contributors.
@@ -508,7 +512,7 @@ Current milestones:
 - [x] Resolve evaluations into workflow outcomes
 - [x] Demonstrate contributor substitutability
 - [x] Implement contributor selection strategy
-- [x] Validate engineering outcomes against acceptance criteria
+- [x] Validate reference-scenario engineering outcomes against explicit acceptance checks
 - [x] Link contributor-produced results to engineering outcomes
 - [x] Execute multi-stage workflows
 - [x] Implement bounded handoffs between workflow stages
@@ -517,7 +521,8 @@ Current milestones:
 - [x] Select contributors independently across workflow stages
 - [x] Preserve per-stage capability and policy boundaries
 - [x] Preserve failure causality through terminal workflow outcomes
-- [x] Preserve structured contribution failure causes
+- [x] Emit structured contribution failure causes at the contribution boundary
+- [x] Distinguish failed engineering validation from unreachable evaluation
 - [ ] Introduce approval boundaries
 - [ ] Add an isolated execution environment
 - [ ] Add an SDLC platform adapter

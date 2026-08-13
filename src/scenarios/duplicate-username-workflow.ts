@@ -39,10 +39,8 @@ export interface DuplicateUsernameWorkflowScenarioResult {
   workItem: WorkItem;
   intent: EngineeringIntent;
   workflow: Workflow;
-  implementationContribution:
-    Contribution;
-  validationContribution:
-    Contribution;
+  implementationContribution: Contribution;
+  validationContribution: Contribution;
   selectedImplementationContributor:
     Contributor | undefined;
   selectedValidationContributor:
@@ -53,25 +51,21 @@ export interface DuplicateUsernameWorkflowScenarioResult {
 }
 
 export interface DuplicateUsernameWorkflowScenarioOptions {
-  implementationCandidates?:
-    ContributorCandidate[];
-  validationCandidates?:
-    ContributorCandidate[];
+  implementationCandidates?: ContributorCandidate[];
+  validationCandidates?: ContributorCandidate[];
   implementationTarget?: string;
 }
 
 export function duplicateUsernameValidatorCandidate(): ContributorCandidate {
   return {
     contributor: {
-      id:
-        "duplicate-username-validator",
+      id: "duplicate-username-validator",
       type: "automation",
       capabilityIds: [
         "validation.execute",
       ],
       available: true,
-      provider:
-        "reference-local",
+      provider: "reference-local",
     },
     executor:
       new DuplicateUsernameValidationContributorExecutor(),
@@ -132,8 +126,7 @@ export function runDuplicateUsernameMultiStageScenario(
   };
 
   const workflow: Workflow = {
-    id:
-      "workflow-multi-stage-001",
+    id: "workflow-multi-stage-001",
     intentId: intent.id,
     stages: [
       {
@@ -186,135 +179,125 @@ export function runDuplicateUsernameMultiStageScenario(
     ],
   };
 
-  const implementationContribution:
-    Contribution = {
-      id:
-        "contribution-implementation-001",
-      workflowId: workflow.id,
-      stageId: "implementation",
-      objective:
-        "Produce user-creation implementation behavior.",
-      scope: [
-        "src/reference-app/",
-      ],
-      contributorProfileId:
-        "implementer",
-      capabilityIds: [
-        "source.write",
-      ],
-      policyIds: [
-        "implementation-source-scope",
-      ],
-      evidenceRequirements: [
-        "capability-result",
-        "policy-result",
-        "command-output",
-      ],
-      completionCriteria: [
-        "Execution succeeds.",
-        "Implementation artifact is produced.",
-      ],
-    };
+  const implementationContribution: Contribution = {
+    id: "contribution-implementation-001",
+    workflowId: workflow.id,
+    stageId: "implementation",
+    objective:
+      "Produce user-creation implementation behavior.",
+    scope: [
+      "src/reference-app/",
+    ],
+    contributorProfileId:
+      "implementer",
+    capabilityIds: [
+      "source.write",
+    ],
+    policyIds: [
+      "implementation-source-scope",
+    ],
+    evidenceRequirements: [
+      "capability-result",
+      "policy-result",
+      "command-output",
+    ],
+    completionCriteria: [
+      "Execution succeeds.",
+      "Implementation artifact is produced.",
+    ],
+  };
 
-  const validationContribution:
-    Contribution = {
-      id:
-        "contribution-validation-001",
-      workflowId: workflow.id,
-      stageId: "validation",
-      objective:
-        "Validate the implementation against duplicate username acceptance criteria.",
-      scope: [
-        "reference-app:",
-      ],
-      contributorProfileId:
-        "validator",
-      capabilityIds: [
-        "validation.execute",
-      ],
-      policyIds: [
-        "validation-artifact-scope",
-      ],
-      evidenceRequirements: [
-        "capability-result",
-        "policy-result",
-        "command-output",
-        "test-result",
-      ],
-      completionCriteria: [
-        "Validation execution succeeds.",
-        "Acceptance result is produced.",
-      ],
-    };
+  const validationContribution: Contribution = {
+    id: "contribution-validation-001",
+    workflowId: workflow.id,
+    stageId: "validation",
+    objective:
+      "Validate the implementation against duplicate username acceptance criteria.",
+    scope: [
+      "reference-app:",
+    ],
+    contributorProfileId:
+      "validator",
+    capabilityIds: [
+      "validation.execute",
+    ],
+    policyIds: [
+      "validation-artifact-scope",
+    ],
+    evidenceRequirements: [
+      "capability-result",
+      "policy-result",
+      "command-output",
+      "test-result",
+    ],
+    completionCriteria: [
+      "Validation execution succeeds.",
+      "Acceptance result is produced.",
+    ],
+  };
 
-  const implementerProfile:
-    ContributorProfile = {
-      id: "implementer",
-      role: "implementer",
-      responsibilities: [
-        "Produce bounded implementation artifacts.",
-      ],
-      allowedCapabilityIds: [
-        "source.write",
-      ],
-      requiredPolicyIds: [
-        "implementation-source-scope",
-      ],
-      preferredContributorTypes: [
-        "automation",
-        "external-service",
-      ],
-    };
+  const implementerProfile: ContributorProfile = {
+    id: "implementer",
+    role: "implementer",
+    responsibilities: [
+      "Produce bounded implementation artifacts.",
+    ],
+    allowedCapabilityIds: [
+      "source.write",
+    ],
+    requiredPolicyIds: [
+      "implementation-source-scope",
+    ],
+    preferredContributorTypes: [
+      "automation",
+      "external-service",
+    ],
+  };
 
-  const validatorProfile:
-    ContributorProfile = {
-      id: "validator",
-      role: "validator",
-      responsibilities: [
-        "Independently validate implementation artifacts.",
-      ],
-      allowedCapabilityIds: [
-        "validation.execute",
-      ],
-      requiredPolicyIds: [
-        "validation-artifact-scope",
-      ],
-      preferredContributorTypes: [
-        "automation",
-        "pipeline",
-        "external-service",
-      ],
-    };
+  const validatorProfile: ContributorProfile = {
+    id: "validator",
+    role: "validator",
+    responsibilities: [
+      "Independently validate implementation artifacts.",
+    ],
+    allowedCapabilityIds: [
+      "validation.execute",
+    ],
+    requiredPolicyIds: [
+      "validation-artifact-scope",
+    ],
+    preferredContributorTypes: [
+      "automation",
+      "pipeline",
+      "external-service",
+    ],
+  };
 
-  const implementationPolicy:
-    Policy = {
-      id:
-        "implementation-source-scope",
-      rule:
-        "Implementation may affect only the reference application source scope.",
-      scope: [
-        "src/reference-app/",
-      ],
-      enforcementPoint:
-        "capability-request",
-      failureBehavior: "deny",
-      severity: "high",
-    };
+  const implementationPolicy: Policy = {
+    id: "implementation-source-scope",
+    rule:
+      "Implementation may affect only the reference application source scope.",
+    scope: [
+      "src/reference-app/",
+    ],
+    enforcementPoint:
+      "capability-request",
+    failureBehavior: "deny",
+    severity: "high",
+  };
 
-  const validationPolicy:
-    Policy = {
-      id:
-        "validation-artifact-scope",
-      rule:
-        "Validation may inspect only reference application artifacts.",
-      scope: [
-        "reference-app:",
-      ],
-      enforcementPoint:
-        "capability-request",
-      failureBehavior: "deny",
-      severity: "high",
-    };
+  const validationPolicy: Policy = {
+    id: "validation-artifact-scope",
+    rule:
+      "Validation may inspect only reference application artifacts.",
+    scope: [
+      "reference-app:",
+    ],
+    enforcementPoint:
+      "capability-request",
+    failureBehavior: "deny",
+    severity: "high",
+  };
 
   const strategy =
     new DeterministicContributionStrategy();
@@ -330,8 +313,7 @@ export function runDuplicateUsernameMultiStageScenario(
       workflow,
       [
         {
-          stageId:
-            "implementation",
+          stageId: "implementation",
           handler: {
             execute: () => {
               const selection =
@@ -341,23 +323,19 @@ export function runDuplicateUsernameMultiStageScenario(
                   contributorProfile:
                     implementerProfile,
                   candidates:
-                    options
-                      .implementationCandidates ??
+                    options.implementationCandidates ??
                     [
                       duplicateSafeCandidate(),
                     ],
                 });
 
-              if (
-                !selection.selected
-              ) {
+              if (!selection.selected) {
                 return {
                   stageId:
                     "implementation",
                   contributionId:
                     implementationContribution.id,
-                  status:
-                    "failed",
+                  status: "failed",
                   failureReason:
                     "contributor-selection-failed",
                   summary:
@@ -367,17 +345,13 @@ export function runDuplicateUsernameMultiStageScenario(
               }
 
               selectedImplementationContributor =
-                selection
-                  .candidate
-                  .contributor;
+                selection.candidate.contributor;
 
               const runner =
                 new ContributionRunner(
                   new DeterministicPolicyEngine(),
                   new InMemoryEvidenceRecorder(),
-                  selection
-                    .candidate
-                    .executor
+                  selection.candidate.executor
                 );
 
               const runResult =
@@ -390,8 +364,7 @@ export function runDuplicateUsernameMultiStageScenario(
                   requestedCapabilityId:
                     "source.write",
                   requestedTarget:
-                    options
-                      .implementationTarget ??
+                    options.implementationTarget ??
                     "src/reference-app/create-user.ts",
                 });
 
@@ -401,8 +374,7 @@ export function runDuplicateUsernameMultiStageScenario(
               ) {
                 const failureReason =
                   mapContributionFailureToWorkflowFailure(
-                    runResult
-                      .failureReason
+                    runResult.failureReason
                   );
 
                 return {
@@ -410,13 +382,11 @@ export function runDuplicateUsernameMultiStageScenario(
                     "implementation",
                   contributionId:
                     implementationContribution.id,
-                  status:
-                    "failed",
+                  status: "failed",
                   failureReason,
                   summary:
                     `Implementation contribution failed: ${
-                      runResult
-                        .failureReason ??
+                      runResult.failureReason ??
                       "unknown"
                     }.`,
                   evidence:
@@ -428,8 +398,7 @@ export function runDuplicateUsernameMultiStageScenario(
                 runResult.execution
                   ?.artifacts?.map(
                     (artifact) =>
-                      artifact
-                        .contentReference
+                      artifact.contentReference
                   ) ?? [];
 
               if (
@@ -441,8 +410,7 @@ export function runDuplicateUsernameMultiStageScenario(
                     "implementation",
                   contributionId:
                     implementationContribution.id,
-                  status:
-                    "failed",
+                  status: "failed",
                   failureReason:
                     "execution-failed",
                   summary:
@@ -457,8 +425,7 @@ export function runDuplicateUsernameMultiStageScenario(
                   "implementation",
                 contributionId:
                   implementationContribution.id,
-                status:
-                  "completed",
+                status: "completed",
                 summary:
                   "Selected implementation contributor executed.",
                 evidence:
@@ -469,8 +436,7 @@ export function runDuplicateUsernameMultiStageScenario(
           },
         },
         {
-          stageId:
-            "validation",
+          stageId: "validation",
           handler: {
             execute: (
               incomingHandoffs
@@ -478,24 +444,21 @@ export function runDuplicateUsernameMultiStageScenario(
               const implementationArtifacts =
                 incomingHandoffs.flatMap(
                   (handoff) =>
-                    handoff
-                      .artifactReferences
+                    handoff.artifactReferences
                 );
 
               const validationTarget =
                 implementationArtifacts[0];
 
               if (
-                validationTarget ===
-                undefined
+                validationTarget === undefined
               ) {
                 return {
                   stageId:
                     "validation",
                   contributionId:
                     validationContribution.id,
-                  status:
-                    "failed",
+                  status: "failed",
                   failureReason:
                     "execution-failed",
                   summary:
@@ -511,23 +474,19 @@ export function runDuplicateUsernameMultiStageScenario(
                   contributorProfile:
                     validatorProfile,
                   candidates:
-                    options
-                      .validationCandidates ??
+                    options.validationCandidates ??
                     [
                       duplicateUsernameValidatorCandidate(),
                     ],
                 });
 
-              if (
-                !selection.selected
-              ) {
+              if (!selection.selected) {
                 return {
                   stageId:
                     "validation",
                   contributionId:
                     validationContribution.id,
-                  status:
-                    "failed",
+                  status: "failed",
                   failureReason:
                     "contributor-selection-failed",
                   summary:
@@ -537,17 +496,13 @@ export function runDuplicateUsernameMultiStageScenario(
               }
 
               selectedValidationContributor =
-                selection
-                  .candidate
-                  .contributor;
+                selection.candidate.contributor;
 
               const runner =
                 new ContributionRunner(
                   new DeterministicPolicyEngine(),
                   new InMemoryEvidenceRecorder(),
-                  selection
-                    .candidate
-                    .executor
+                  selection.candidate.executor
                 );
 
               const validationRun =
@@ -569,8 +524,7 @@ export function runDuplicateUsernameMultiStageScenario(
               ) {
                 const failureReason =
                   mapContributionFailureToWorkflowFailure(
-                    validationRun
-                      .failureReason
+                    validationRun.failureReason
                   );
 
                 return {
@@ -578,13 +532,11 @@ export function runDuplicateUsernameMultiStageScenario(
                     "validation",
                   contributionId:
                     validationContribution.id,
-                  status:
-                    "failed",
+                  status: "failed",
                   failureReason,
                   summary:
                     `Validation contribution failed: ${
-                      validationRun
-                        .failureReason ??
+                      validationRun.failureReason ??
                       "unknown"
                     }.`,
                   evidence:
@@ -663,20 +615,16 @@ export function runDuplicateUsernameMultiStageScenario(
                 evidence:
                   testEvidence ===
                   undefined
-                    ? validationRun
-                        .evidence
+                    ? validationRun.evidence
                     : [
-                        ...validationRun
-                          .evidence,
+                        ...validationRun.evidence,
                         testEvidence,
                       ],
                 artifactReferences:
-                  validationRun
-                    .execution
+                  validationRun.execution
                     ?.artifacts?.map(
                       (artifact) =>
-                        artifact
-                          .contentReference
+                        artifact.contentReference
                     ) ?? [],
               };
             },
@@ -685,10 +633,14 @@ export function runDuplicateUsernameMultiStageScenario(
       ]
     );
 
+  const engineeringEvaluationApplicable =
+    workflowRun.status === "completed" ||
+    workflowRun.failureReason ===
+      "engineering-validation-failed";
+
   const evaluation =
     new DeterministicEvaluator().evaluate({
-      id:
-        "evaluation-workflow-001",
+      id: "evaluation-workflow-001",
       targetId: workflow.id,
       targetType: "workflow",
       requirements: [
@@ -712,6 +664,17 @@ export function runDuplicateUsernameMultiStageScenario(
       ],
       evidence:
         workflowRun.evidence,
+      applicable:
+        engineeringEvaluationApplicable,
+      ...(!engineeringEvaluationApplicable
+        ? {
+            inapplicableReason:
+              `Engineering evaluation was not reached because the workflow ended with ${
+                workflowRun.failureReason ??
+                "an upstream workflow failure"
+              }.`,
+          }
+        : {}),
     });
 
   const outcome =

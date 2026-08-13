@@ -67,11 +67,19 @@ describe("Reference Scenario 001 multi-stage workflow", () => {
     ).toBe("completed");
 
     expect(
+      result.evaluation.result
+    ).toBe("passed");
+
+    expect(
       result.outcome.status
     ).toBe("completed");
+
+    expect(
+      result.outcome.reasonCode
+    ).toBeUndefined();
   });
 
-  it("preserves engineering validation failure through the terminal outcome", () => {
+  it("preserves engineering validation failure through evaluation and terminal outcome", () => {
     const result =
       runDuplicateUsernameMultiStageScenario({
         implementationCandidates: [
@@ -99,6 +107,10 @@ describe("Reference Scenario 001 multi-stage workflow", () => {
     ).toBe("validation");
 
     expect(
+      result.evaluation.result
+    ).toBe("failed");
+
+    expect(
       result.outcome
     ).toMatchObject({
       status: "failed",
@@ -109,7 +121,7 @@ describe("Reference Scenario 001 multi-stage workflow", () => {
     });
   });
 
-  it("preserves contributor selection failure instead of throwing outside the workflow", () => {
+  it("makes engineering evaluation inconclusive when contributor selection prevents validation", () => {
     const result =
       runDuplicateUsernameMultiStageScenario({
         implementationCandidates: [
@@ -142,6 +154,16 @@ describe("Reference Scenario 001 multi-stage workflow", () => {
     ).toBeUndefined();
 
     expect(
+      result.evaluation.result
+    ).toBe("inconclusive");
+
+    expect(
+      result.evaluation.findings?.[0]
+    ).toContain(
+      "contributor-selection-failed"
+    );
+
+    expect(
       result.outcome
     ).toMatchObject({
       status: "failed",
@@ -152,7 +174,7 @@ describe("Reference Scenario 001 multi-stage workflow", () => {
     });
   });
 
-  it("maps contribution policy denial into terminal governance denial without inspecting evidence metadata", () => {
+  it("makes engineering evaluation inconclusive when policy denial prevents validation", () => {
     const result =
       runDuplicateUsernameMultiStageScenario({
         implementationCandidates: [
@@ -187,6 +209,16 @@ describe("Reference Scenario 001 multi-stage workflow", () => {
       result.workflowRun
         .handoffs
     ).toHaveLength(0);
+
+    expect(
+      result.evaluation.result
+    ).toBe("inconclusive");
+
+    expect(
+      result.evaluation.findings?.[0]
+    ).toContain(
+      "governance-denied"
+    );
 
     expect(
       result.outcome
