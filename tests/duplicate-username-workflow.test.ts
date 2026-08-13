@@ -20,7 +20,8 @@ import { DeterministicExecutor } from "../src/core/executor.js";
 function incapableValidatorCandidate(): ContributorCandidate {
   return {
     contributor: {
-      id: "incapable-validator",
+      id:
+        "incapable-validator",
       type: "automation",
       capabilityIds: [
         "source.read",
@@ -158,7 +159,8 @@ describe("Reference Scenario 001 multi-stage workflow", () => {
     ).toBe("inconclusive");
 
     expect(
-      result.evaluation.findings?.[0]
+      result.evaluation
+        .findings?.[0]
     ).toContain(
       "contributor-selection-failed"
     );
@@ -206,8 +208,7 @@ describe("Reference Scenario 001 multi-stage workflow", () => {
     );
 
     expect(
-      result.workflowRun
-        .handoffs
+      result.workflowRun.handoffs
     ).toHaveLength(0);
 
     expect(
@@ -215,7 +216,8 @@ describe("Reference Scenario 001 multi-stage workflow", () => {
     ).toBe("inconclusive");
 
     expect(
-      result.evaluation.findings?.[0]
+      result.evaluation
+        .findings?.[0]
     ).toContain(
       "governance-denied"
     );

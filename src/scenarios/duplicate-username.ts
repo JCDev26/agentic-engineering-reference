@@ -5,6 +5,7 @@ import {
   type ContributorCandidate,
 } from "../core/contribution-strategy.js";
 import { InMemoryEvidenceRecorder } from "../core/evidence-recorder.js";
+import { decideEvaluationApplicability } from "../core/evaluation-applicability.js";
 import { DeterministicEvaluator } from "../core/evaluator.js";
 import { DeterministicOutcomeResolver } from "../core/outcome-resolver.js";
 import { DeterministicPolicyEngine } from "../core/policy-engine.js";
@@ -54,7 +55,9 @@ export function duplicateSafeCandidate(): ContributorCandidate {
     contributor: {
       id: "duplicate-safe-contributor",
       type: "automation",
-      capabilityIds: ["source.write"],
+      capabilityIds: [
+        "source.write",
+      ],
       available: true,
       provider: "reference-local",
     },
@@ -66,11 +69,15 @@ export function duplicateSafeCandidate(): ContributorCandidate {
 export function duplicateAcceptingCandidate(): ContributorCandidate {
   return {
     contributor: {
-      id: "duplicate-accepting-contributor",
+      id:
+        "duplicate-accepting-contributor",
       type: "external-service",
-      capabilityIds: ["source.write"],
+      capabilityIds: [
+        "source.write",
+      ],
       available: true,
-      provider: "reference-simulated",
+      provider:
+        "reference-simulated",
     },
     executor:
       new DuplicateAcceptingUserCreatorContributorExecutor(),
@@ -120,7 +127,8 @@ export function runDuplicateUsernameReferenceScenario(
 
   const workItem: WorkItem = {
     id: "WI-001",
-    title: "Prevent duplicate usernames",
+    title:
+      "Prevent duplicate usernames",
     description:
       "Reject duplicate username creation while preserving existing valid user creation behavior.",
     source: "reference-scenario",
@@ -139,7 +147,9 @@ export function runDuplicateUsernameReferenceScenario(
         expectedContribution:
           "Bounded source change within the approved user-management scope.",
         dependencies: [],
-        policyIds: ["source-scope"],
+        policyIds: [
+          "source-scope",
+        ],
         evidenceRequirements: [
           "capability-result",
           "policy-result",
@@ -164,9 +174,14 @@ export function runDuplicateUsernameReferenceScenario(
     objective:
       "Modify approved user-management source code.",
     scope: ["src/"],
-    contributorProfileId: "implementer",
-    capabilityIds: ["source.write"],
-    policyIds: ["source-scope"],
+    contributorProfileId:
+      "implementer",
+    capabilityIds: [
+      "source.write",
+    ],
+    policyIds: [
+      "source-scope",
+    ],
     evidenceRequirements: [
       "capability-result",
       "policy-result",
@@ -186,8 +201,12 @@ export function runDuplicateUsernameReferenceScenario(
     responsibilities: [
       "Perform bounded source implementation.",
     ],
-    allowedCapabilityIds: ["source.write"],
-    requiredPolicyIds: ["source-scope"],
+    allowedCapabilityIds: [
+      "source.write",
+    ],
+    requiredPolicyIds: [
+      "source-scope",
+    ],
     preferredContributorTypes: [
       "automation",
       "external-service",
@@ -199,7 +218,8 @@ export function runDuplicateUsernameReferenceScenario(
     rule:
       "Implementation contributions may modify only approved source files.",
     scope: ["src/"],
-    enforcementPoint: "capability-request",
+    enforcementPoint:
+      "capability-request",
     failureBehavior: "deny",
     severity: "high",
   };
@@ -224,15 +244,18 @@ export function runDuplicateUsernameReferenceScenario(
   const selectedContributor =
     selection.candidate.contributor;
 
-  const runner = new ContributionRunner(
-    new DeterministicPolicyEngine(),
-    new InMemoryEvidenceRecorder(),
-    selection.candidate.executor
-  );
+  const runner =
+    new ContributionRunner(
+      new DeterministicPolicyEngine(),
+      new InMemoryEvidenceRecorder(),
+      selection.candidate.executor
+    );
 
   const runResult = runner.run({
     contribution,
-    policies: [sourceScopePolicy],
+    policies: [
+      sourceScopePolicy,
+    ],
     requestedCapabilityId:
       options.requestedCapabilityId ??
       "source.write",
@@ -261,51 +284,78 @@ export function runDuplicateUsernameReferenceScenario(
     ...validationEvidence,
   ];
 
-  const evaluator = new DeterministicEvaluator();
+  const applicability =
+    decideEvaluationApplicability({
+      kind: "contribution",
+      runResult,
+    });
 
-  const evaluation = evaluator.evaluate({
-    id: "evaluation-001",
-    targetId: contribution.id,
-    targetType: "contribution",
-    requirements: [
-      {
-        type: "capability-result",
-        metadata: {
-          granted: true,
+  const evaluator =
+    new DeterministicEvaluator();
+
+  const evaluation =
+    evaluator.evaluate({
+      id: "evaluation-001",
+      targetId:
+        contribution.id,
+      targetType:
+        "contribution",
+      requirements: [
+        {
+          type:
+            "capability-result",
+          metadata: {
+            granted: true,
+          },
         },
-      },
-      {
-        type: "policy-result",
-        metadata: {
-          allowed: true,
+        {
+          type:
+            "policy-result",
+          metadata: {
+            allowed: true,
+          },
         },
-      },
-      {
-        type: "command-output",
-        metadata: {
-          status: "succeeded",
+        {
+          type:
+            "command-output",
+          metadata: {
+            status:
+              "succeeded",
+          },
         },
-      },
-      {
-        type: "test-result",
-        metadata: {
-          status: "passed",
-          uniqueCreationPassed: true,
-          duplicateRejectionPassed: true,
-          subsequentValidCreationPassed: true,
+        {
+          type: "test-result",
+          metadata: {
+            status: "passed",
+            uniqueCreationPassed:
+              true,
+            duplicateRejectionPassed:
+              true,
+            subsequentValidCreationPassed:
+              true,
+          },
         },
-      },
-    ],
-    evidence,
-  });
+      ],
+      evidence,
+      applicable:
+        applicability.applicable,
+      ...(!applicability.applicable
+        ? {
+            inapplicableReason:
+              applicability.reason,
+          }
+        : {}),
+    });
 
   const outcomeResolver =
     new DeterministicOutcomeResolver();
 
-  const outcome = outcomeResolver.resolve({
-    workflowId: workflow.id,
-    evaluation,
-  });
+  const outcome =
+    outcomeResolver.resolve({
+      workflowId:
+        workflow.id,
+      evaluation,
+    });
 
   return {
     workItem,

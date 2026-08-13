@@ -4,6 +4,7 @@ import {
   it,
 } from "vitest";
 
+import { decideEvaluationApplicability } from "../src/core/evaluation-applicability.js";
 import { DeterministicEvaluator } from "../src/core/evaluator.js";
 import { DeterministicOutcomeResolver } from "../src/core/outcome-resolver.js";
 import { DeterministicWorkflowRunner } from "../src/core/workflow-runner.js";
@@ -25,7 +26,8 @@ import {
 function incapableValidatorCandidate(): ContributorCandidate {
   return {
     contributor: {
-      id: "incapable-validator",
+      id:
+        "incapable-validator",
       type: "automation",
       capabilityIds: [
         "source.read",
@@ -73,43 +75,55 @@ describe("Terminal failure semantics", () => {
         ],
       });
 
-    const deadlockedWorkflow: Workflow = {
-      id:
-        "workflow-terminal-deadlock",
-      intentId:
-        "intent-terminal-deadlock",
-      stages: [
-        {
-          id: "stage-a",
-          responsibility: "A",
-          expectedContribution: "A",
-          dependencies: [
-            "stage-b",
-          ],
-          policyIds: [],
-          evidenceRequirements: [],
-          completionCriteria: [],
-        },
-        {
-          id: "stage-b",
-          responsibility: "B",
-          expectedContribution: "B",
-          dependencies: [
-            "stage-a",
-          ],
-          policyIds: [],
-          evidenceRequirements: [],
-          completionCriteria: [],
-        },
-      ],
-      completionCriteria: [],
-    };
+    const deadlockedWorkflow:
+      Workflow = {
+        id:
+          "workflow-terminal-deadlock",
+        intentId:
+          "intent-terminal-deadlock",
+        stages: [
+          {
+            id: "stage-a",
+            responsibility:
+              "A",
+            expectedContribution:
+              "A",
+            dependencies: [
+              "stage-b",
+            ],
+            policyIds: [],
+            evidenceRequirements: [],
+            completionCriteria: [],
+          },
+          {
+            id: "stage-b",
+            responsibility:
+              "B",
+            expectedContribution:
+              "B",
+            dependencies: [
+              "stage-a",
+            ],
+            policyIds: [],
+            evidenceRequirements: [],
+            completionCriteria: [],
+          },
+        ],
+        completionCriteria: [],
+      };
 
     const deadlockRun =
       new DeterministicWorkflowRunner().run(
         deadlockedWorkflow,
         []
       );
+
+    const deadlockApplicability =
+      decideEvaluationApplicability({
+        kind: "workflow",
+        runResult:
+          deadlockRun,
+      });
 
     const deadlockEvaluation =
       new DeterministicEvaluator().evaluate({
@@ -126,9 +140,14 @@ describe("Terminal failure semantics", () => {
         ],
         evidence:
           deadlockRun.evidence,
-        applicable: false,
-        inapplicableReason:
-          "Engineering evaluation was unreachable because workflow dependencies could not be satisfied.",
+        applicable:
+          deadlockApplicability.applicable,
+        ...(!deadlockApplicability.applicable
+          ? {
+              inapplicableReason:
+                deadlockApplicability.reason,
+            }
+          : {}),
       });
 
     const deadlock =
@@ -172,6 +191,11 @@ describe("Terminal failure semantics", () => {
     );
 
     expect(
+      deadlockApplicability
+        .applicable
+    ).toBe(false);
+
+    expect(
       deadlockEvaluation.result
     ).toBe("inconclusive");
 
@@ -183,9 +207,12 @@ describe("Terminal failure semantics", () => {
 
     expect(
       new Set([
-        governance.outcome.reasonCode,
-        selection.outcome.reasonCode,
-        engineering.outcome.reasonCode,
+        governance.outcome
+          .reasonCode,
+        selection.outcome
+          .reasonCode,
+        engineering.outcome
+          .reasonCode,
         deadlock.reasonCode,
       ]).size
     ).toBe(4);

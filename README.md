@@ -163,6 +163,8 @@ Failure causes should be emitted by the architectural layer that directly observ
 
 Absence of engineering-success evidence should not be treated as proof of engineering failure when the workflow never reached the required validation boundary.
 
+Evaluation applicability should be derived consistently from contribution or workflow run state rather than redefined independently by each scenario.
+
 ### Incremental Delivery
 
 Contributor orchestration should reinforce good software engineering practices rather than replace them.
@@ -377,7 +379,7 @@ Examples may include:
 
 A task-level assessment of whether the intended engineering outcome was achieved.
 
-Evaluation may also be inconclusive when the workflow does not reach the boundary required to evaluate the engineering result.
+Evaluation may also be inconclusive when contribution or workflow state shows that the required engineering validation boundary was never reached.
 
 ### `Handoff`
 
@@ -523,6 +525,7 @@ Current milestones:
 - [x] Preserve failure causality through terminal workflow outcomes
 - [x] Emit structured contribution failure causes at the contribution boundary
 - [x] Distinguish failed engineering validation from unreachable evaluation
+- [x] Centralize evaluation applicability decisions across reference scenarios
 - [ ] Introduce approval boundaries
 - [ ] Add an isolated execution environment
 - [ ] Add an SDLC platform adapter
