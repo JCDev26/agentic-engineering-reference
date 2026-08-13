@@ -16,16 +16,23 @@ export class DuplicateUsernameValidationContributorExecutor
   implements ContributorExecutor
 {
   execute(
-    request: Parameters<ContributorExecutor["execute"]>[0]
+    request: Parameters<
+      ContributorExecutor["execute"]
+    >[0]
   ): ExecutionResult {
     const implementationArtifactReference =
       request.target;
 
-    if (implementationArtifactReference === undefined) {
+    if (
+      implementationArtifactReference ===
+      undefined
+    ) {
       return {
         status: "failed",
-        contributionId: request.contribution.id,
-        capabilityId: request.capabilityId,
+        contributionId:
+          request.contribution.id,
+        capabilityId:
+          request.capabilityId,
         summary:
           "Validation contributor did not receive an implementation artifact.",
       };
@@ -35,28 +42,41 @@ export class DuplicateUsernameValidationContributorExecutor
       new DuplicateUsernameAcceptanceValidator()
         .validateArtifactReferences(
           request.contribution.id,
-          [implementationArtifactReference]
+          [
+            implementationArtifactReference,
+          ]
         );
 
     const validationPassed =
-      validationEvidence.metadata?.status ===
-      "passed";
+      validationEvidence.metadata
+        ?.status === "passed";
 
-    const artifact: ExecutionArtifact = {
-      type: "acceptance-validation-result",
-      contentReference: validationPassed
-        ? validationPassedArtifactReference
-        : validationFailedArtifactReference,
-    };
+    const artifact:
+      ExecutionArtifact = {
+        type:
+          "acceptance-validation-result",
+        contentReference:
+          validationPassed
+            ? validationPassedArtifactReference
+            : validationFailedArtifactReference,
+      };
 
     return {
       status: "succeeded",
-      contributionId: request.contribution.id,
-      capabilityId: request.capabilityId,
-      summary: validationPassed
-        ? "Validation contributor confirmed the implementation satisfies acceptance criteria."
-        : "Validation contributor completed validation and found unmet acceptance criteria.",
-      artifacts: [artifact],
+      contributionId:
+        request.contribution.id,
+      capabilityId:
+        request.capabilityId,
+      summary:
+        validationPassed
+          ? "Validation contributor confirmed the implementation satisfies acceptance criteria."
+          : "Validation contributor completed validation and found unmet acceptance criteria.",
+      artifacts: [
+        artifact,
+      ],
+      evidence: [
+        validationEvidence,
+      ],
     };
   }
 }

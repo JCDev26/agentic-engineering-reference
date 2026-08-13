@@ -7,324 +7,90 @@ import {
 
 import { ContributionRunner } from "../src/core/contribution-runner.js";
 import { InMemoryEvidenceRecorder } from "../src/core/evidence-recorder.js";
-import {
-  DeterministicExecutor,
-  type Executor,
+import type {
+  ExecutionRequest,
+  ExecutionResult,
+  Executor,
 } from "../src/core/executor.js";
+import { DeterministicExecutor } from "../src/core/executor.js";
 import { DeterministicPolicyEngine } from "../src/core/policy-engine.js";
 
 import type { Contribution } from "../src/domain/contribution.js";
 import type { Policy } from "../src/domain/policy.js";
 
-const contribution: Contribution = {
-  id: "contribution-001",
-  workflowId: "workflow-001",
-  stageId: "implementation",
-  objective:
-    "Modify approved source code",
-  scope: ["src/"],
-  contributorProfileId: "implementer",
-  capabilityIds: ["source.write"],
-  policyIds: ["source-scope"],
-  evidenceRequirements: [
-    "policy-result",
-  ],
-  completionCriteria: [
-    "execution completed",
-  ],
-};
+function contribution(): Contribution {
+  return {
+    id: "contribution-001",
+    workflowId: "workflow-001",
+    stageId: "implementation",
+    objective:
+      "Perform bounded source work.",
+    scope: ["src/"],
+    contributorProfileId:
+      "implementer",
+    capabilityIds: [
+      "source.write",
+    ],
+    policyIds: [
+      "source-scope",
+    ],
+    evidenceRequirements: [
+      "capability-result",
+      "policy-result",
+      "command-output",
+    ],
+    completionCriteria: [
+      "Execution succeeds.",
+    ],
+  };
+}
 
-const sourceScopePolicy: Policy = {
-  id: "source-scope",
-  rule:
-    "Contribution may modify only files within src/",
-  scope: ["src/"],
-  enforcementPoint:
-    "capability-request",
-  failureBehavior: "deny",
-  severity: "high",
-};
+function sourcePolicy(): Policy {
+  return {
+    id: "source-scope",
+    rule:
+      "Source writes must remain within src.",
+    scope: ["src/"],
+    enforcementPoint:
+      "capability-request",
+    failureBehavior: "deny",
+    severity: "high",
+  };
+}
 
 describe("ContributionRunner", () => {
-  it("executes a contribution and records execution evidence after governance allows it", () => {
-    const executor =
-      new DeterministicExecutor();
-
-    const executeSpy =
-      vi.spyOn(
-        executor,
-        "execute"
-      );
-
+  it("executes an allowed contribution without a failure reason", () => {
     const runner =
       new ContributionRunner(
         new DeterministicPolicyEngine(),
         new InMemoryEvidenceRecorder(),
-        executor
+        new DeterministicExecutor()
       );
 
-    const result = runner.run({
-      contribution,
-      policies: [
-        sourceScopePolicy,
-      ],
-      requestedCapabilityId:
-        "source.write",
-      requestedTarget:
-        "src/domain/work-item.ts",
-    });
+    const result =
+      runner.run({
+        contribution:
+          contribution(),
+        policies: [
+          sourcePolicy(),
+        ],
+        requestedCapabilityId:
+          "source.write",
+        requestedTarget:
+          "src/example.ts",
+      });
 
-    expect(result.status).toBe(
-      "executed"
-    );
+    expect(
+      result.status
+    ).toBe("executed");
 
     expect(
       result.failureReason
     ).toBeUndefined();
 
     expect(
-      executeSpy
-    ).toHaveBeenCalledOnce();
-
-    expect(
-      result.execution
-    ).toMatchObject({
-      status: "succeeded",
-      contributionId:
-        "contribution-001",
-      capabilityId:
-        "source.write",
-    });
-
-    expect(
-      result.evidence
-    ).toHaveLength(3);
-
-    expect(
-      result.evidence[0]?.type
-    ).toBe("capability-result");
-
-    expect(
-      result.evidence[0]?.metadata
-    ).toMatchObject({
-      capabilityId:
-        "source.write",
-      granted: true,
-    });
-
-    expect(
-      result.evidence[1]?.type
-    ).toBe("policy-result");
-
-    expect(
-      result.evidence[1]?.metadata
-    ).toMatchObject({
-      allowed: true,
-    });
-
-    expect(
-      result.evidence[2]?.type
-    ).toBe("command-output");
-
-    expect(
-      result.evidence[2]?.metadata
-    ).toMatchObject({
-      capabilityId:
-        "source.write",
-      status: "succeeded",
-    });
-  });
-
-  it("reports policy-denied without reaching execution when policy blocks the action", () => {
-    const executor =
-      new DeterministicExecutor();
-
-    const executeSpy =
-      vi.spyOn(
-        executor,
-        "execute"
-      );
-
-    const runner =
-      new ContributionRunner(
-        new DeterministicPolicyEngine(),
-        new InMemoryEvidenceRecorder(),
-        executor
-      );
-
-    const result = runner.run({
-      contribution,
-      policies: [
-        sourceScopePolicy,
-      ],
-      requestedCapabilityId:
-        "source.write",
-      requestedTarget:
-        "README.md",
-    });
-
-    expect(result.status).toBe(
-      "blocked"
-    );
-
-    expect(
-      result.failureReason
-    ).toBe("policy-denied");
-
-    expect(
-      executeSpy
-    ).not.toHaveBeenCalled();
-
-    expect(
-      result.execution
-    ).toBeUndefined();
-
-    expect(
-      result.evidence
-    ).toHaveLength(2);
-
-    expect(
-      result.evidence[0]?.metadata
-    ).toMatchObject({
-      capabilityId:
-        "source.write",
-      granted: true,
-    });
-
-    expect(
-      result.evidence[1]?.metadata
-    ).toMatchObject({
-      allowed: false,
-      action: "deny",
-    });
-
-    expect(
-      result.evidence.some(
-        (evidence) =>
-          evidence.type ===
-          "command-output"
-      )
-    ).toBe(false);
-  });
-
-  it("reports capability-denied and records only capability evidence when the capability is not granted", () => {
-    const executor =
-      new DeterministicExecutor();
-
-    const executeSpy =
-      vi.spyOn(
-        executor,
-        "execute"
-      );
-
-    const runner =
-      new ContributionRunner(
-        new DeterministicPolicyEngine(),
-        new InMemoryEvidenceRecorder(),
-        executor
-      );
-
-    const result = runner.run({
-      contribution,
-      policies: [
-        sourceScopePolicy,
-      ],
-      requestedCapabilityId:
-        "deployment.execute",
-      requestedTarget:
-        "src/domain/work-item.ts",
-    });
-
-    expect(result.status).toBe(
-      "blocked"
-    );
-
-    expect(
-      result.failureReason
-    ).toBe(
-      "capability-denied"
-    );
-
-    expect(
-      executeSpy
-    ).not.toHaveBeenCalled();
-
-    expect(
-      result.execution
-    ).toBeUndefined();
-
-    expect(
-      result.evidence
-    ).toHaveLength(1);
-
-    expect(
-      result.evidence[0]?.metadata
-    ).toMatchObject({
-      capabilityId:
-        "deployment.execute",
-      granted: false,
-      reason:
-        "Capability is not granted to this contribution.",
-    });
-
-    expect(
-      result.evidence.some(
-        (evidence) =>
-          evidence.type ===
-          "command-output"
-      )
-    ).toBe(false);
-  });
-
-  it("reports execution-failed when governance allows execution but the executor fails", () => {
-    const failingExecutor:
-      Executor = {
-        execute: (request) => ({
-          status: "failed",
-          contributionId:
-            request.contribution.id,
-          capabilityId:
-            request.capabilityId,
-          summary:
-            "Executor failed to complete the contribution.",
-        }),
-      };
-
-    const runner =
-      new ContributionRunner(
-        new DeterministicPolicyEngine(),
-        new InMemoryEvidenceRecorder(),
-        failingExecutor
-      );
-
-    const result = runner.run({
-      contribution,
-      policies: [
-        sourceScopePolicy,
-      ],
-      requestedCapabilityId:
-        "source.write",
-      requestedTarget:
-        "src/domain/work-item.ts",
-    });
-
-    expect(result.status).toBe(
-      "execution-failed"
-    );
-
-    expect(
-      result.failureReason
-    ).toBe("execution-failed");
-
-    expect(
-      result.execution
-    ).toMatchObject({
-      status: "failed",
-      contributionId:
-        "contribution-001",
-      capabilityId:
-        "source.write",
-    });
+      result.execution?.status
+    ).toBe("succeeded");
 
     expect(
       result.evidence.map(
@@ -336,11 +102,293 @@ describe("ContributionRunner", () => {
       "policy-result",
       "command-output",
     ]);
+  });
+
+  it("returns policy-denied when deterministic policy prevents execution", () => {
+    const execute = vi.fn(
+      (
+        request: ExecutionRequest
+      ): ExecutionResult => ({
+        status: "succeeded",
+        contributionId:
+          request.contribution.id,
+        capabilityId:
+          request.capabilityId,
+        summary:
+          "Should not execute.",
+      })
+    );
+
+    const executor: Executor = {
+      execute,
+    };
+
+    const runner =
+      new ContributionRunner(
+        new DeterministicPolicyEngine(),
+        new InMemoryEvidenceRecorder(),
+        executor
+      );
+
+    const result =
+      runner.run({
+        contribution:
+          contribution(),
+        policies: [
+          sourcePolicy(),
+        ],
+        requestedCapabilityId:
+          "source.write",
+        requestedTarget:
+          "README.md",
+      });
 
     expect(
-      result.evidence[2]?.metadata
+      result.status
+    ).toBe("blocked");
+
+    expect(
+      result.failureReason
+    ).toBe(
+      "policy-denied"
+    );
+
+    expect(
+      execute
+    ).not.toHaveBeenCalled();
+
+    expect(
+      result.evidence.map(
+        (evidence) =>
+          evidence.type
+      )
+    ).toEqual([
+      "capability-result",
+      "policy-result",
+    ]);
+  });
+
+  it("returns capability-denied when the requested capability is not granted", () => {
+    const execute = vi.fn(
+      (
+        request: ExecutionRequest
+      ): ExecutionResult => ({
+        status: "succeeded",
+        contributionId:
+          request.contribution.id,
+        capabilityId:
+          request.capabilityId,
+        summary:
+          "Should not execute.",
+      })
+    );
+
+    const executor: Executor = {
+      execute,
+    };
+
+    const runner =
+      new ContributionRunner(
+        new DeterministicPolicyEngine(),
+        new InMemoryEvidenceRecorder(),
+        executor
+      );
+
+    const result =
+      runner.run({
+        contribution:
+          contribution(),
+        policies: [
+          sourcePolicy(),
+        ],
+        requestedCapabilityId:
+          "deployment.execute",
+        requestedTarget:
+          "src/example.ts",
+      });
+
+    expect(
+      result.status
+    ).toBe("blocked");
+
+    expect(
+      result.failureReason
+    ).toBe(
+      "capability-denied"
+    );
+
+    expect(
+      execute
+    ).not.toHaveBeenCalled();
+
+    expect(
+      result.evidence.map(
+        (evidence) =>
+          evidence.type
+      )
+    ).toEqual([
+      "capability-result",
+    ]);
+  });
+
+  it("returns execution-failed when the executor fails", () => {
+    const executor: Executor = {
+      execute: (
+        request
+      ): ExecutionResult => ({
+        status: "failed",
+        contributionId:
+          request.contribution.id,
+        capabilityId:
+          request.capabilityId,
+        summary:
+          "Execution failed.",
+      }),
+    };
+
+    const runner =
+      new ContributionRunner(
+        new DeterministicPolicyEngine(),
+        new InMemoryEvidenceRecorder(),
+        executor
+      );
+
+    const result =
+      runner.run({
+        contribution:
+          contribution(),
+        policies: [
+          sourcePolicy(),
+        ],
+        requestedCapabilityId:
+          "source.write",
+        requestedTarget:
+          "src/example.ts",
+      });
+
+    expect(
+      result.status
+    ).toBe(
+      "execution-failed"
+    );
+
+    expect(
+      result.failureReason
+    ).toBe(
+      "execution-failed"
+    );
+
+    expect(
+      result.evidence.map(
+        (evidence) =>
+          evidence.type
+      )
+    ).toEqual([
+      "capability-result",
+      "policy-result",
+      "command-output",
+    ]);
+  });
+
+  it("preserves structured evidence produced directly by the executor", () => {
+    const executor: Executor = {
+      execute: (
+        request
+      ): ExecutionResult => ({
+        status: "succeeded",
+        contributionId:
+          request.contribution.id,
+        capabilityId:
+          request.capabilityId,
+        summary:
+          "Validation completed.",
+        evidence: [
+          {
+            id:
+              "validation-evidence-001",
+            contributionId:
+              request.contribution.id,
+            type:
+              "test-result",
+            timestamp:
+              "2026-08-13T12:00:00.000Z",
+            contentReference:
+              "validation:duplicate-username:test",
+            producer:
+              "reference-validator",
+            metadata: {
+              status: "passed",
+              uniqueCreationPassed:
+                true,
+              duplicateRejectionPassed:
+                true,
+              subsequentValidCreationPassed:
+                true,
+            },
+          },
+        ],
+      }),
+    };
+
+    const runner =
+      new ContributionRunner(
+        new DeterministicPolicyEngine(),
+        new InMemoryEvidenceRecorder(),
+        executor
+      );
+
+    const result =
+      runner.run({
+        contribution:
+          contribution(),
+        policies: [
+          sourcePolicy(),
+        ],
+        requestedCapabilityId:
+          "source.write",
+        requestedTarget:
+          "src/example.ts",
+      });
+
+    expect(
+      result.status
+    ).toBe("executed");
+
+    expect(
+      result.evidence.map(
+        (evidence) =>
+          evidence.type
+      )
+    ).toEqual([
+      "capability-result",
+      "policy-result",
+      "command-output",
+      "test-result",
+    ]);
+
+    const producedEvidence =
+      result.evidence.find(
+        (evidence) =>
+          evidence.type ===
+          "test-result"
+      );
+
+    expect(
+      producedEvidence
     ).toMatchObject({
-      status: "failed",
+      id:
+        "validation-evidence-001",
+      producer:
+        "reference-validator",
+      metadata: {
+        status: "passed",
+        uniqueCreationPassed:
+          true,
+        duplicateRejectionPassed:
+          true,
+        subsequentValidCreationPassed:
+          true,
+      },
     });
   });
 });

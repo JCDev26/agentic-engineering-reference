@@ -22,7 +22,6 @@ import type {
 } from "../domain/contributor.js";
 import type { EngineeringIntent } from "../domain/engineering-intent.js";
 import type { Evaluation } from "../domain/evaluation.js";
-import type { Evidence } from "../domain/evidence.js";
 import type { Outcome } from "../domain/outcome.js";
 import type { Policy } from "../domain/policy.js";
 import type { WorkItem } from "../domain/work-item.js";
@@ -33,7 +32,6 @@ import {
 } from "./duplicate-username.js";
 import {
   DuplicateUsernameValidationContributorExecutor,
-  validationPassedArtifactReference,
 } from "./duplicate-username-validation-contributors.js";
 
 export interface DuplicateUsernameWorkflowScenarioResult {
@@ -588,54 +586,30 @@ export function runDuplicateUsernameMultiStageScenario(
                 };
               }
 
-              const validationArtifact =
-                validationRun.execution
-                  ?.artifacts?.find(
-                    (artifact) =>
-                      artifact.type ===
-                      "acceptance-validation-result"
-                  );
-
-              const testEvidence:
-                | Evidence
-                | undefined =
-                validationArtifact ===
-                undefined
-                  ? undefined
-                  : {
-                      id:
-                        crypto.randomUUID(),
-                      contributionId:
-                        validationContribution.id,
-                      type:
-                        "test-result",
-                      timestamp:
-                        new Date()
-                          .toISOString(),
-                      contentReference:
-                        validationArtifact
-                          .contentReference,
-                      producer:
-                        selectedValidationContributor.id,
-                      metadata: {
-                        status:
-                          validationArtifact
-                            .contentReference ===
-                          validationPassedArtifactReference
-                            ? "passed"
-                            : "failed",
-                        duplicateRejectionPassed:
-                          validationArtifact
-                            .contentReference ===
-                          validationPassedArtifactReference,
-                      },
-                    };
+              const validationEvidence =
+                validationRun.evidence.find(
+                  (evidence) =>
+                    evidence.type ===
+                    "test-result"
+                );
 
               const validationPassed =
-                testEvidence
+                validationEvidence
                   ?.metadata
                   ?.status ===
-                "passed";
+                  "passed" &&
+                validationEvidence
+                  ?.metadata
+                  ?.uniqueCreationPassed ===
+                  true &&
+                validationEvidence
+                  ?.metadata
+                  ?.duplicateRejectionPassed ===
+                  true &&
+                validationEvidence
+                  ?.metadata
+                  ?.subsequentValidCreationPassed ===
+                  true;
 
               return {
                 stageId:
@@ -657,15 +631,7 @@ export function runDuplicateUsernameMultiStageScenario(
                     ? "Selected validation contributor confirmed the implementation."
                     : "Selected validation contributor found unmet acceptance criteria.",
                 evidence:
-                  testEvidence ===
-                  undefined
-                    ? validationRun
-                        .evidence
-                    : [
-                        ...validationRun
-                          .evidence,
-                        testEvidence,
-                      ],
+                  validationRun.evidence,
                 artifactReferences:
                   validationRun.execution
                     ?.artifacts?.map(
@@ -710,7 +676,11 @@ export function runDuplicateUsernameMultiStageScenario(
             "test-result",
           metadata: {
             status: "passed",
+            uniqueCreationPassed:
+              true,
             duplicateRejectionPassed:
+              true,
+            subsequentValidCreationPassed:
               true,
           },
         },

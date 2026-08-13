@@ -165,6 +165,8 @@ Absence of engineering-success evidence should not be treated as proof of engine
 
 Evaluation applicability should be derived consistently from contribution or workflow run state rather than redefined independently by each scenario.
 
+Structured evidence produced directly during a contribution should remain evidence through downstream evaluation rather than being reconstructed from weaker artifacts or telemetry.
+
 ### Incremental Delivery
 
 Contributor orchestration should reinforce good software engineering practices rather than replace them.
@@ -375,6 +377,8 @@ Examples may include:
 - approvals
 - evaluation outcomes
 
+Evidence produced directly by an executor may remain attached to its execution result and be preserved by contribution orchestration.
+
 ### `Evaluation`
 
 A task-level assessment of whether the intended engineering outcome was achieved.
@@ -516,6 +520,7 @@ Current milestones:
 - [x] Implement contributor selection strategy
 - [x] Validate reference-scenario engineering outcomes against explicit acceptance checks
 - [x] Link contributor-produced results to engineering outcomes
+- [x] Preserve validator-produced evidence through multi-stage evaluation
 - [x] Execute multi-stage workflows
 - [x] Implement bounded handoffs between workflow stages
 - [x] Make workflow progression dependency-driven

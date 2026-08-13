@@ -1,6 +1,9 @@
 import type { Contribution } from "../domain/contribution.js";
 import type { Evidence } from "../domain/evidence.js";
-import type { Policy, PolicyContext } from "../domain/policy.js";
+import type {
+  Policy,
+  PolicyContext,
+} from "../domain/policy.js";
 
 import type { EvidenceRecorder } from "./evidence-recorder.js";
 import type {
@@ -36,9 +39,12 @@ export interface ContributionExecutionRequest {
 
 export class ContributionRunner {
   constructor(
-    private readonly policyEngine: PolicyEngine,
-    private readonly evidenceRecorder: EvidenceRecorder,
-    private readonly executor: Executor
+    private readonly policyEngine:
+      PolicyEngine,
+    private readonly evidenceRecorder:
+      EvidenceRecorder,
+    private readonly executor:
+      Executor
   ) {}
 
   run(
@@ -51,9 +57,12 @@ export class ContributionRunner {
 
     const capabilityEvidence =
       this.evidenceRecorder.recordCapabilityDecision({
-        contributionId: request.contribution.id,
-        capabilityId: request.requestedCapabilityId,
-        granted: capabilityGranted,
+        contributionId:
+          request.contribution.id,
+        capabilityId:
+          request.requestedCapabilityId,
+        granted:
+          capabilityGranted,
         ...(!capabilityGranted
           ? {
               reason:
@@ -65,17 +74,23 @@ export class ContributionRunner {
     if (!capabilityGranted) {
       return {
         status: "blocked",
-        contributionId: request.contribution.id,
-        failureReason: "capability-denied",
-        evidence: [capabilityEvidence],
+        contributionId:
+          request.contribution.id,
+        evidence: [
+          capabilityEvidence,
+        ],
+        failureReason:
+          "capability-denied",
       };
     }
 
     const context: PolicyContext = {
-      contributionId: request.contribution.id,
+      contributionId:
+        request.contribution.id,
       requestedCapabilityId:
         request.requestedCapabilityId,
-      ...(request.requestedTarget !== undefined
+      ...(request.requestedTarget !==
+      undefined
         ? {
             requestedTarget:
               request.requestedTarget,
@@ -102,22 +117,28 @@ export class ContributionRunner {
       ...policyEvidence,
     ];
 
-    const blocked = decisions.some(
-      (decision) => !decision.allowed
-    );
+    const blocked =
+      decisions.some(
+        (decision) =>
+          !decision.allowed
+      );
 
     if (blocked) {
       return {
         status: "blocked",
-        contributionId: request.contribution.id,
-        failureReason: "policy-denied",
-        evidence: preExecutionEvidence,
+        contributionId:
+          request.contribution.id,
+        evidence:
+          preExecutionEvidence,
+        failureReason:
+          "policy-denied",
       };
     }
 
     const execution =
       this.executor.execute({
-        contribution: request.contribution,
+        contribution:
+          request.contribution,
         capabilityId:
           request.requestedCapabilityId,
         ...(request.requestedTarget !==
@@ -134,25 +155,37 @@ export class ContributionRunner {
         execution
       );
 
-    if (execution.status === "failed") {
+    const producedEvidence =
+      execution.evidence ?? [];
+
+    if (
+      execution.status ===
+      "failed"
+    ) {
       return {
-        status: "execution-failed",
-        contributionId: request.contribution.id,
-        failureReason: "execution-failed",
+        status:
+          "execution-failed",
+        contributionId:
+          request.contribution.id,
         evidence: [
           ...preExecutionEvidence,
           executionEvidence,
+          ...producedEvidence,
         ],
         execution,
+        failureReason:
+          "execution-failed",
       };
     }
 
     return {
       status: "executed",
-      contributionId: request.contribution.id,
+      contributionId:
+        request.contribution.id,
       evidence: [
         ...preExecutionEvidence,
         executionEvidence,
+        ...producedEvidence,
       ],
       execution,
     };

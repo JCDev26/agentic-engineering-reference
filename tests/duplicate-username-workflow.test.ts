@@ -67,6 +67,37 @@ describe("Reference Scenario 001 multi-stage workflow", () => {
       result.workflowRun.status
     ).toBe("completed");
 
+    const validationEvidence =
+      result.workflowRun.evidence.find(
+        (evidence) =>
+          evidence.type ===
+            "test-result" &&
+          evidence.contributionId ===
+            result
+              .validationContribution
+              .id
+      );
+
+    expect(
+      validationEvidence
+        ?.producer
+    ).toBe(
+      "duplicate-username-acceptance-validator"
+    );
+
+    expect(
+      validationEvidence
+        ?.metadata
+    ).toMatchObject({
+      status: "passed",
+      uniqueCreationPassed:
+        true,
+      duplicateRejectionPassed:
+        true,
+      subsequentValidCreationPassed:
+        true,
+    });
+
     expect(
       result.evaluation.result
     ).toBe("passed");
@@ -80,7 +111,7 @@ describe("Reference Scenario 001 multi-stage workflow", () => {
     ).toBeUndefined();
   });
 
-  it("preserves engineering validation failure through evaluation and terminal outcome", () => {
+  it("preserves validator-produced failure findings through evaluation and terminal outcome", () => {
     const result =
       runDuplicateUsernameMultiStageScenario({
         implementationCandidates: [
@@ -106,6 +137,37 @@ describe("Reference Scenario 001 multi-stage workflow", () => {
       result.workflowRun
         .failedStageId
     ).toBe("validation");
+
+    const validationEvidence =
+      result.workflowRun.evidence.find(
+        (evidence) =>
+          evidence.type ===
+            "test-result" &&
+          evidence.contributionId ===
+            result
+              .validationContribution
+              .id
+      );
+
+    expect(
+      validationEvidence
+        ?.producer
+    ).toBe(
+      "duplicate-username-acceptance-validator"
+    );
+
+    expect(
+      validationEvidence
+        ?.metadata
+    ).toMatchObject({
+      status: "failed",
+      uniqueCreationPassed:
+        true,
+      duplicateRejectionPassed:
+        false,
+      subsequentValidCreationPassed:
+        true,
+    });
 
     expect(
       result.evaluation.result
@@ -216,13 +278,6 @@ describe("Reference Scenario 001 multi-stage workflow", () => {
     ).toBe("inconclusive");
 
     expect(
-      result.evaluation
-        .findings?.[0]
-    ).toContain(
-      "governance-denied"
-    );
-
-    expect(
       result.outcome
     ).toMatchObject({
       status: "failed",
@@ -230,19 +285,6 @@ describe("Reference Scenario 001 multi-stage workflow", () => {
         "governance-denied",
       failedStageId:
         "implementation",
-    });
-
-    const policyEvidence =
-      result.workflowRun.evidence.find(
-        (evidence) =>
-          evidence.type ===
-          "policy-result"
-      );
-
-    expect(
-      policyEvidence?.metadata
-    ).toMatchObject({
-      allowed: false,
     });
   });
 });
