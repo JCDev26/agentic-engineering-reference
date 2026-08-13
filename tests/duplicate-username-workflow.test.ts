@@ -47,14 +47,16 @@ describe("Reference Scenario 001 multi-stage workflow", () => {
       });
 
     expect(
-      result.selectedImplementationContributor
+      result
+        .selectedImplementationContributor
         ?.id
     ).toBe(
       "duplicate-safe-contributor"
     );
 
     expect(
-      result.selectedValidationContributor
+      result
+        .selectedValidationContributor
         ?.id
     ).toBe(
       "duplicate-username-validator"
@@ -96,7 +98,9 @@ describe("Reference Scenario 001 multi-stage workflow", () => {
         .failedStageId
     ).toBe("validation");
 
-    expect(result.outcome).toMatchObject({
+    expect(
+      result.outcome
+    ).toMatchObject({
       status: "failed",
       reasonCode:
         "engineering-validation-failed",
@@ -133,10 +137,13 @@ describe("Reference Scenario 001 multi-stage workflow", () => {
     ).toBe("validation");
 
     expect(
-      result.selectedValidationContributor
+      result
+        .selectedValidationContributor
     ).toBeUndefined();
 
-    expect(result.outcome).toMatchObject({
+    expect(
+      result.outcome
+    ).toMatchObject({
       status: "failed",
       reasonCode:
         "contributor-selection-failed",
@@ -145,7 +152,7 @@ describe("Reference Scenario 001 multi-stage workflow", () => {
     });
   });
 
-  it("preserves governance denial through the terminal outcome", () => {
+  it("maps contribution policy denial into terminal governance denial without inspecting evidence metadata", () => {
     const result =
       runDuplicateUsernameMultiStageScenario({
         implementationCandidates: [
@@ -172,18 +179,36 @@ describe("Reference Scenario 001 multi-stage workflow", () => {
     expect(
       result.workflowRun
         .failedStageId
-    ).toBe("implementation");
+    ).toBe(
+      "implementation"
+    );
 
     expect(
-      result.workflowRun.handoffs
+      result.workflowRun
+        .handoffs
     ).toHaveLength(0);
 
-    expect(result.outcome).toMatchObject({
+    expect(
+      result.outcome
+    ).toMatchObject({
       status: "failed",
       reasonCode:
         "governance-denied",
       failedStageId:
         "implementation",
+    });
+
+    const policyEvidence =
+      result.workflowRun.evidence.find(
+        (evidence) =>
+          evidence.type ===
+          "policy-result"
+      );
+
+    expect(
+      policyEvidence?.metadata
+    ).toMatchObject({
+      allowed: false,
     });
   });
 });

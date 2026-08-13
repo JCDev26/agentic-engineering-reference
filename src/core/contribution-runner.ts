@@ -14,11 +14,17 @@ export type ContributionRunStatus =
   | "executed"
   | "execution-failed";
 
+export type ContributionFailureReason =
+  | "capability-denied"
+  | "policy-denied"
+  | "execution-failed";
+
 export interface ContributionRunResult {
   status: ContributionRunStatus;
   contributionId: string;
   evidence: Evidence[];
   execution?: ExecutionResult;
+  failureReason?: ContributionFailureReason;
 }
 
 export interface ContributionExecutionRequest {
@@ -35,7 +41,9 @@ export class ContributionRunner {
     private readonly executor: Executor
   ) {}
 
-  run(request: ContributionExecutionRequest): ContributionRunResult {
+  run(
+    request: ContributionExecutionRequest
+  ): ContributionRunResult {
     const capabilityGranted =
       request.contribution.capabilityIds.includes(
         request.requestedCapabilityId
@@ -58,29 +66,36 @@ export class ContributionRunner {
       return {
         status: "blocked",
         contributionId: request.contribution.id,
+        failureReason: "capability-denied",
         evidence: [capabilityEvidence],
       };
     }
 
     const context: PolicyContext = {
       contributionId: request.contribution.id,
-      requestedCapabilityId: request.requestedCapabilityId,
+      requestedCapabilityId:
+        request.requestedCapabilityId,
       ...(request.requestedTarget !== undefined
-        ? { requestedTarget: request.requestedTarget }
+        ? {
+            requestedTarget:
+              request.requestedTarget,
+          }
         : {}),
     };
 
-    const decisions = this.policyEngine.evaluate(
-      request.policies,
-      context
-    );
+    const decisions =
+      this.policyEngine.evaluate(
+        request.policies,
+        context
+      );
 
-    const policyEvidence = decisions.map((decision) =>
-      this.evidenceRecorder.recordPolicyDecision(
-        context,
-        decision
-      )
-    );
+    const policyEvidence =
+      decisions.map((decision) =>
+        this.evidenceRecorder.recordPolicyDecision(
+          context,
+          decision
+        )
+      );
 
     const preExecutionEvidence = [
       capabilityEvidence,
@@ -95,28 +110,45 @@ export class ContributionRunner {
       return {
         status: "blocked",
         contributionId: request.contribution.id,
+        failureReason: "policy-denied",
         evidence: preExecutionEvidence,
       };
     }
 
-    const execution = this.executor.execute({
-      contribution: request.contribution,
-      capabilityId: request.requestedCapabilityId,
-      ...(request.requestedTarget !== undefined
-        ? { target: request.requestedTarget }
-        : {}),
-    });
+    const execution =
+      this.executor.execute({
+        contribution: request.contribution,
+        capabilityId:
+          request.requestedCapabilityId,
+        ...(request.requestedTarget !==
+        undefined
+          ? {
+              target:
+                request.requestedTarget,
+            }
+          : {}),
+      });
 
     const executionEvidence =
       this.evidenceRecorder.recordExecutionResult(
         execution
       );
 
+    if (execution.status === "failed") {
+      return {
+        status: "execution-failed",
+        contributionId: request.contribution.id,
+        failureReason: "execution-failed",
+        evidence: [
+          ...preExecutionEvidence,
+          executionEvidence,
+        ],
+        execution,
+      };
+    }
+
     return {
-      status:
-        execution.status === "succeeded"
-          ? "executed"
-          : "execution-failed",
+      status: "executed",
       contributionId: request.contribution.id,
       evidence: [
         ...preExecutionEvidence,

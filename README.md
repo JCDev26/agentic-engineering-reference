@@ -159,6 +159,8 @@ Workflows should validate the intended outcome using appropriate evidence such a
 - task-specific evaluations
 - human review
 
+Failure causes should be emitted by the architectural layer that directly observes the failure rather than reconstructed later from downstream evidence.
+
 ### Incremental Delivery
 
 Contributor orchestration should reinforce good software engineering practices rather than replace them.
@@ -177,45 +179,47 @@ The architecture should support iterative delivery and continuous improvement ra
 
 ## Reference Flow
 
-    Request Source
-         │
-         ▼
-    Normalized Work Item
-         │
-         ▼
-    Engineering Intent
-         │
-         ▼
-    Policy / Preflight
-         │
-         ▼
-    Engineering Workflow
-         │
-         ▼
-    Contribution Strategy
-         │
-         ├──────────────┬──────────────┬──────────────┐
-         ▼              ▼              ▼              ▼
-      Human         Automation      Pipeline       AI Agent
-         │              │              │              │
-         └──────────────┴──────────────┴──────────────┘
-                                │
-                                ▼
-                     Execution Environment
-                                │
-                                ▼
-                         Validation / Evals
-                                │
-                                ▼
-                         Evidence Collection
-                                │
-                        ┌───────┴───────┐
-                        ▼               ▼
-                     Delivery       Human Review
-                        │               │
-                        └───────┬───────┘
-                                ▼
-                           Final Outcome
+```text
+Request Source
+    │
+    ▼
+Normalized Work Item
+    │
+    ▼
+Engineering Intent
+    │
+    ▼
+Policy / Preflight
+    │
+    ▼
+Engineering Workflow
+    │
+    ▼
+Contribution Strategy
+    │
+    ├──────────────┬──────────────┬──────────────┐
+    ▼              ▼              ▼              ▼
+  Human         Automation      Pipeline       AI Agent
+    │              │              │              │
+    └──────────────┴──────────────┴──────────────┘
+                           │
+                           ▼
+                 Execution Environment
+                           │
+                           ▼
+                   Validation / Evals
+                           │
+                           ▼
+                   Evidence Collection
+                           │
+                    ┌──────┴──────┐
+                    ▼             ▼
+                 Delivery     Human Review
+                    │             │
+                    └──────┬──────┘
+                           ▼
+                     Final Outcome
+```
 
 ---
 
@@ -401,7 +405,7 @@ Potential adapters may include:
 
 ## Repository Goals
 
-This repository will evolve through small, testable iterations.
+This repository evolves through small, testable iterations.
 
 Planned areas include:
 
@@ -420,7 +424,7 @@ Planned areas include:
 - observability
 - practical multi-contributor orchestration
 
-The project will prioritize architectural clarity, engineering reasoning, and measurable value over feature count.
+The project prioritizes architectural clarity, engineering reasoning, and measurable value over feature count.
 
 ---
 
@@ -475,27 +479,21 @@ Major architectural choices are documented through Architecture Decision Records
 Current decisions:
 
 - `ADR-0001` — Keep the core architecture contributor- and vendor-neutral
+- `ADR-0002` — Separate engineering intent from engineering contribution
 
-Future decisions will cover:
+Future decisions will be added only when an architectural choice has been exercised enough to justify a durable decision record.
 
-- separation of engineering intent from engineering contribution
-- deterministic governance
-- execution boundaries
-- evidence and provenance
-- evaluation
-- human approval
-- contributor specialization
-- orchestration complexity
+Current implementation experiments are documented separately through focused review records under `docs/reviews/`.
 
 ---
 
 ## Status
 
-Early reference architecture.
+Active reference architecture under incremental development.
 
-The project intentionally begins with principles and contracts before implementation.
+The project began with principles and contracts and now includes executable reference implementations that pressure-test those architectural claims.
 
-Initial milestones:
+Current milestones:
 
 - [x] Define project purpose
 - [x] Establish contributor- and vendor-neutral principles
@@ -511,8 +509,15 @@ Initial milestones:
 - [x] Demonstrate contributor substitutability
 - [x] Implement contributor selection strategy
 - [x] Validate engineering outcomes against acceptance criteria
+- [x] Link contributor-produced results to engineering outcomes
 - [x] Execute multi-stage workflows
-- [x] Implement handoffs between contributors
+- [x] Implement bounded handoffs between workflow stages
+- [x] Make workflow progression dependency-driven
+- [x] Handle multiple upstream dependencies and fan-in
+- [x] Select contributors independently across workflow stages
+- [x] Preserve per-stage capability and policy boundaries
+- [x] Preserve failure causality through terminal workflow outcomes
+- [x] Preserve structured contribution failure causes
 - [ ] Introduce approval boundaries
 - [ ] Add an isolated execution environment
 - [ ] Add an SDLC platform adapter
@@ -520,6 +525,6 @@ Initial milestones:
 
 ---
 
-## License
+## Source Availability
 
-MIT
+This repository is publicly available for portfolio and reference purposes. No open-source license is currently granted.
