@@ -15,7 +15,7 @@ Use the Challenge to test whether a project's claims hold up along real executio
 
 ### 30-second quick start
 
-1. Open your target repository in a repository-aware coding/software-engineering agent.
+1. Open your target repository in an authorized repository-aware coding/software-engineering agent; check the [privacy and access guidance](#privacy--security-before-you-run-it) first.
 2. For the first full assessment, choose a strong reasoning-capable model and high/deep reasoning if available.
 3. Copy the complete [project review prompt](docs/challenge/project-review-prompt.md) below its divider.
 4. Paste it into the agent; it reviews the repository currently open in the workspace.
@@ -38,22 +38,35 @@ Your Repository → Architecture Challenge Prompt
   → Human review
 ```
 
-This is a review loop, not software installed or executed inside the target. Some reviewing tools can instead inspect a public repository URL with GitHub/web access. That depends on the tool; private repositories require authorized access. This reference is not a remote scanning service.
+This is a review loop, not software installed or executed inside the target.
+
+### Privacy & Security Before You Run It
+
+The Challenge is a copy/paste review methodology. **agentic-engineering-reference itself does not receive your target repository, upload your source code, operate a remote scanning service, or collect target-repository telemetry.** It requires neither repository credentials nor installation inside the target.
+
+Your chosen reviewing environment may receive and process repository content. Its behavior depends on the provider's product, plan, privacy settings, retention policies, enterprise/organization controls, administrator policies, and applicable terms. Verify those controls before sharing content; this reference makes no privacy guarantee about that environment.
+
+- **Public repositories:** a capable agent with GitHub/web access may inspect a repository from its URL; support depends on the reviewing tool.
+- **Private or sensitive repositories:** use an organization-approved environment with appropriately authorized access. Follow security, AI-use, repository, and data-classification policies, including enterprise/business controls where required. Do not make a private repository public or upload proprietary code to an unapproved service to run the Challenge. This reference does not provide repository access.
+
+Use least privilege. Do not expose unnecessary passwords, API keys, access tokens, private keys, production credentials, customer or regulated data, or sensitive personal information. Do not grant access to production databases/infrastructure, unrelated private repositories, or organization systems outside the review scope merely for a more complete assessment.
+
+If something cannot safely or appropriately be inspected, record the access limitation, describe what could not be verified, and classify the relevant claim accordingly. **Missing access is an evidence limitation, not automatically a defect.** Do not broaden access merely to obtain a stronger classification.
 
 ### Recommended reviewer configuration
 
 | Review type | Recommended configuration |
 | --- | --- |
 | Quick orientation | Capable coding model, normal/medium reasoning, repo read access |
-| Full Architecture Challenge | Strong coding/reasoning model, high reasoning, repo-wide access |
+| Full Architecture Challenge | Strong coding/reasoning model, high reasoning, repo-wide read/search access where authorized and appropriate |
 | Large/complex repo | Strong multi-step repo agent, high reasoning, tests/CI/history where permitted |
 | Focused follow-up | Medium/high reasoning scoped to an accepted finding |
 
-Use a repository-aware engineering agent with read/search access to source, tests, docs, and configuration, plus CI definitions/results and useful git history where available. Terminal/test execution requires authorization. Keep the first assessment read-only.
+Repository-wide visibility can improve review depth, but grant only authorized and appropriate read/search access needed for relevant source, tests, docs, configuration, CI definitions/results, and useful git history. This does not mean unrestricted access to connected systems. Terminal/test execution requires separate authorization under applicable repository and organization policies. Keep the first assessment read-only; write access is not required.
 
 This work needs cross-file causal reasoning, evidence tracing, negative-path analysis, trust/authority analysis, and architectural judgment—not primarily code completion. Fast/autocomplete-oriented models can help with orientation or follow-up but are not preferred for the first full review. No model vendor or official integration is required.
 
-> Reviewer capability affects review depth. Repository evidence determines what can actually be claimed.
+> Reviewer capability affects review depth. Repository evidence determines what can actually be claimed. Access should remain bounded to what the review legitimately requires.
 
 - README claim ≠ implementation proof.
 - Test exists ≠ test executed successfully.
