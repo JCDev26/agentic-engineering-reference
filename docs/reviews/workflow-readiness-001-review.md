@@ -1,5 +1,7 @@
 # Workflow Readiness 001 Review
 
+> Historical experiment at commit `3888c64`. Findings and next steps describe that revision, not current v1. See the [current capability matrix](../v1-capability-matrix.md) and [maturation review](v1-maturation-review.md).
+
 ## Purpose
 
 This review records the architectural findings from replacing array-order workflow sequencing with explicit dependency readiness.

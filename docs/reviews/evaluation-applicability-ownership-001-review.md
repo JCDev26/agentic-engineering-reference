@@ -1,5 +1,7 @@
 # Evaluation Applicability Ownership 001 Review
 
+> Historical experiment at commit `b9a6464`. Findings and next steps describe that revision, not current v1. See the [current capability matrix](../v1-capability-matrix.md) and [maturation review](v1-maturation-review.md).
+
 ## Purpose
 
 This review records the architectural findings from moving engineering-evaluation applicability out of individual scenario conventions and into a reusable core decision.

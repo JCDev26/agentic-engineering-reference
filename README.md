@@ -1,543 +1,70 @@
 # Agentic Engineering Reference
 
-A reference architecture for engineering contribution systems that coordinate humans, automation, pipelines, external services, and AI through shared workflows, governance, evidence, and review.
-
-## Why This Exists
-
-Modern software engineering is performed by more than one kind of contributor.
-
-Engineering work may be planned, implemented, validated, reviewed, or delivered by:
-
-- software engineers
-- automation frameworks
-- CI/CD pipelines
-- scripts
-- external services
-- AI agents
-- future execution technologies
-
-The architectural challenge is therefore larger than deciding which AI model or coding tool should perform a task.
-
-The challenge is defining **engineering intent, governance, validation, and evidence independently from the contributor performing the work**.
-
-When workflows are built directly around a specific contributor, IDE, vendor, or execution mechanism, several problems emerge:
-
-- engineering workflows become coupled to individual tools
-- governance is duplicated across contributor types
-- execution boundaries become inconsistent
-- observability becomes fragmented
-- validation standards vary by implementation
-- contributor changes require workflow redesign
-- human review is added inconsistently
-- automation complexity grows before it provides measurable value
-
-This project explores a different approach.
-
-The goal is to separate **engineering intent** from **engineering contribution** through reusable contracts, deterministic governance, observable workflows, bounded execution, and reviewable evidence.
-
-The architecture should remain useful regardless of whether a contribution is performed by a human, automation, a pipeline, an AI agent, or a future technology.
-
----
-
-## Core Principles
-
-### Contributor- and Vendor-Neutral Contracts
-
-Engineering workflows should not depend on one contributor type, AI provider, IDE, SDLC platform, or execution technology.
-
-Core concepts such as work items, contributor profiles, policies, evidence, approvals, and execution environments should be modeled independently from contributor-specific implementations.
-
-### Engineering Defines the Workflow
-
-Contributors participate in engineering workflows.
-
-They do not define them.
-
-A workflow should describe the engineering outcome, constraints, validation, and evidence required without assuming which contributor will perform the work.
-
-### Deterministic Governance
-
-Important engineering constraints should not rely only on contributor instructions or probabilistic reasoning.
-
-Policies such as:
-
-- repository scope
-- branch restrictions
-- tool permissions
-- required validation
-- approval gates
-- destructive-action limits
-- retry limits
-
-should be enforced through deterministic controls wherever possible.
-
-### Bounded Contribution
-
-Contributors should receive only the capabilities required for their assigned responsibility.
-
-Execution should follow least-privilege principles using:
-
-- explicit capability boundaries
-- scoped credentials
-- bounded retries
-- defined execution environments
-- controlled handoffs
-
-### Observability by Default
-
-Engineering workflows should produce evidence describing what occurred regardless of contributor type.
-
-Useful telemetry may include:
-
-- contributors invoked
-- contributor type
-- tools or capabilities used
-- skills or guidance applied
-- policy interactions
-- workflow handoffs
-- retries
-- validation results
-- execution artifacts
-- human intervention
-- final outcome
-
-Observability should support both auditability and continuous improvement.
-
-### Human Oversight
-
-Automation should increase only where confidence, reversibility, and risk permit it.
-
-High-risk, irreversible, ambiguous, or policy-sensitive actions should support human review or approval before completion.
-
-Humans remain contributors within the architecture rather than being treated only as exception handlers.
-
-### Simple Before Complex
-
-Not every task requires an AI agent.
-
-Not every agentic task requires multiple agents.
-
-The architecture should support a progression from:
-
-1. human contribution
-2. deterministic automation
-3. pipeline execution
-4. single-agent contribution
-5. specialized contributors
-6. coordinated multi-contributor workflows
-
-Complexity should be introduced only when it produces measurable engineering value.
-
-### Isolated Execution
-
-Reasoning, orchestration, and execution should be separated where practical.
-
-Execution environments may include:
-
-- local workspaces
-- Docker containers
-- virtual machines
-- CI runners
-- cloud sandboxes
-- external systems
-
-Isolation should be chosen according to risk, contributor capability, and workflow requirements.
-
-### Evidence-Driven Validation
-
-Successful execution is not the same as successful engineering.
-
-Workflows should validate the intended outcome using appropriate evidence such as:
-
-- automated tests
-- static analysis
-- policy checks
-- runtime validation
-- screenshots
-- logs
-- diffs
-- task-specific evaluations
-- human review
-
-Failure causes should be emitted by the architectural layer that directly observes the failure rather than reconstructed later from downstream evidence.
-
-Absence of engineering-success evidence should not be treated as proof of engineering failure when the workflow never reached the required validation boundary.
-
-Evaluation applicability should be derived consistently from contribution or workflow run state rather than redefined independently by each scenario.
-
-Structured evidence produced directly during a contribution should remain evidence through downstream evaluation rather than being reconstructed from weaker artifacts or telemetry.
-
-### Incremental Delivery
-
-Contributor orchestration should reinforce good software engineering practices rather than replace them.
-
-Changes should remain:
-
-- small
-- reviewable
-- testable
-- observable
-- reversible where practical
-
-The architecture should support iterative delivery and continuous improvement rather than large autonomous changes with limited visibility.
-
----
-
-## Reference Flow
-
-```text
-Request Source
-    │
-    ▼
-Normalized Work Item
-    │
-    ▼
-Engineering Intent
-    │
-    ▼
-Policy / Preflight
-    │
-    ▼
-Engineering Workflow
-    │
-    ▼
-Contribution Strategy
-    │
-    ├──────────────┬──────────────┬──────────────┐
-    ▼              ▼              ▼              ▼
-  Human         Automation      Pipeline       AI Agent
-    │              │              │              │
-    └──────────────┴──────────────┴──────────────┘
-                           │
-                           ▼
-                 Execution Environment
-                           │
-                           ▼
-                   Validation / Evals
-                           │
-                           ▼
-                   Evidence Collection
-                           │
-                    ┌──────┴──────┐
-                    ▼             ▼
-                 Delivery     Human Review
-                    │             │
-                    └──────┬──────┘
-                           ▼
-                     Final Outcome
-```
-
----
-
-## Core Abstractions
-
-The reference architecture is centered around a small set of reusable engineering concepts.
-
-### `WorkItem`
-
-A normalized representation of engineering work independent of where the request originated.
-
-Sources may include:
-
-- GitHub issue
-- GitLab issue
-- Jira ticket
-- Slack request
-- CLI command
-- API request
-- human request
-- automated event
-
-### `EngineeringIntent`
-
-A contributor-neutral description of the desired engineering outcome.
-
-Intent describes **what must be accomplished**, not who or what should accomplish it.
-
-### `Workflow`
-
-The defined engineering path used to satisfy a work item.
-
-A workflow may contain deterministic, human, automated, or agentic contributions.
-
-### `Contributor`
-
-An actor capable of performing an engineering contribution.
-
-Examples include:
-
-- human engineer
-- automation framework
-- CI/CD pipeline
-- script
-- external service
-- AI agent
-
-### `ContributorProfile`
-
-A description of a contributor's role, capabilities, constraints, and responsibilities within a workflow.
-
-Examples may include:
-
-- planner
-- implementer
-- reviewer
-- validator
-- documentation contributor
-- deployment contributor
-
-The same role may be fulfilled by different contributor types.
-
-### `Contribution`
-
-A bounded unit of engineering work performed by a contributor.
-
-Examples include:
-
-- planning
-- implementation
-- review
-- validation
-- investigation
-- documentation
-- deployment
-
-### `Skill`
-
-Reusable domain knowledge or procedural guidance that may support a contributor.
-
-### `Tool`
-
-An executable capability exposed to a contributor or workflow.
-
-Examples may include:
-
-- filesystem access
-- source control
-- test execution
-- APIs
-- browser automation
-- MCP servers
-- deployment systems
-
-### `Policy`
-
-A deterministic constraint applied to engineering work.
-
-Examples may include:
-
-- repository scope
-- allowed branches
-- contributor permissions
-- required tests
-- approval gates
-- retry limits
-- deployment restrictions
-
-### `ContributionStrategy`
-
-The mechanism used to determine which contributor or combination of contributors should perform a contribution.
-
-Selection may consider:
-
-- capability
-- risk
-- policy
-- cost
-- availability
-- confidence
-- execution environment
-
-### `ExecutionEnvironment`
-
-The environment in which a contribution is executed.
-
-Possible implementations include:
-
-- developer workspace
-- Docker container
-- CI runner
-- virtual machine
-- cloud sandbox
-- external service
-
-### `Evidence`
-
-Structured proof of what occurred during a contribution or workflow.
-
-Examples may include:
-
-- test results
-- logs
-- screenshots
-- diffs
-- commands executed
-- contributor handoffs
-- policy decisions
-- approvals
-- evaluation outcomes
-
-Evidence produced directly by an executor may remain attached to its execution result and be preserved by contribution orchestration.
-
-### `Evaluation`
-
-A task-level assessment of whether the intended engineering outcome was achieved.
-
-Evaluation may also be inconclusive when contribution or workflow state shows that the required engineering validation boundary was never reached.
-
-### `Handoff`
-
-The transfer of responsibility, context, or evidence between contributors.
-
-### `Approval`
-
-Explicit authorization required before controlled work may continue.
-
-### `Adapter`
-
-An implementation that connects the core architecture to a contributor, platform, or external system.
-
-Potential adapters may include:
-
-- GitHub
-- GitLab
-- Jira
-- Cursor
-- Claude Code
-- OpenAI Codex
-- GitHub Copilot
-- GitLab Duo
-- MCP
-- Docker
-- CI/CD platforms
-
----
-
-## Repository Goals
-
-This repository evolves through small, testable iterations.
-
-Planned areas include:
-
-- architecture principles
-- engineering workflow contracts
-- contributor contracts
-- contribution strategies
-- deterministic governance
-- execution boundaries
-- evidence and provenance models
-- evaluation strategies
-- human review patterns
-- contributor and SDLC adapters
-- isolated execution examples
-- reference workflows
-- observability
-- practical multi-contributor orchestration
-
-The project prioritizes architectural clarity, engineering reasoning, and measurable value over feature count.
-
----
-
-## What This Project Is Not
-
-This repository is not intended to be:
-
-- a production-ready autonomous coding platform
-- a replacement for existing engineering or AI tools
-- a recommendation that every workflow should use AI
-- a recommendation that every agentic workflow should use multiple agents
-- a vendor-specific agent framework
-- a copy of any private or employer-specific implementation
-- a large framework built before its abstractions are understood
-
-The purpose is to explore reusable engineering patterns and document the reasoning behind them.
-
----
-
-## Design Philosophy
-
-Every architectural decision in this repository should answer:
-
-> Why does this abstraction exist?
-
-Two additional rules guide the architecture:
+A v1 reference architecture for coordinating engineering contributions through explicit intent, governed execution, independent validation, and attributable evidence.
 
 > The contributor is not the workflow.
-
+>
 > The platform is not the architecture.
+>
+> Execution completion is not engineering success.
 
-Engineering systems should define intent, governance, validation, and evidence independently from the contributor selected to perform the work.
+AI is one possible contributor. Humans, scripts, automation, pipelines, and external services belong behind the same engineering boundaries. This repository proves a small set of those boundaries in TypeScript; it does not implement a production agent platform.
 
-The goal is to explore how modern engineering systems can remain:
+## What v1 proves
 
-- understandable
-- maintainable
-- observable
-- secure
-- portable
-- reviewable
-- adaptable over time
+The reference task is deliberately small: **prevent duplicate usernames while preserving valid user creation**. Local contributors return references to predefined implementation behaviors. A validator exercises the selected behavior; no contributor edits source code or calls an AI service.
 
-AI is an important contributor within that system, but it is not the system itself.
+The executable path is:
 
----
+```text
+EngineeringIntent + structured evaluation requirements
+    → workflow responsibilities and dependencies
+    → contributor selection for each contribution
+    → capability and policy checks
+    → execution and artifact handoff
+    → independent acceptance validation
+    → original evidence + applicability decision
+    → deterministic Evaluation
+    → Outcome preserving the primary terminal cause
+```
 
-## Architecture Decisions
+Tests demonstrate that changing a structured intent requirement changes evaluation; changing the contributor can change the engineering result without changing the contracts; denied work never invokes its executor; and validation that cannot run is inconclusive rather than a failed acceptance test. Dependency readiness, fan-in, stage-specific authority, and evidence provenance are also executable.
 
-Major architectural choices are documented through Architecture Decision Records.
+These are proofs within a trusted, synchronous, in-memory reference. Capability checks gate calls; they do not sandbox arbitrary code. Provenance identifies the producer; it does not authenticate an external producer. See the [v1 capability matrix](docs/v1-capability-matrix.md) for evidence and limits.
 
-Current decisions:
+## Read and run
 
-- `ADR-0001` — Keep the core architecture contributor- and vendor-neutral
-- `ADR-0002` — Separate engineering intent from engineering contribution
+1. [Reference architecture](docs/reference-architecture.md): responsibilities, runtime boundaries, and failure semantics.
+2. [Architecture decisions](docs/adr/ADR-0001-contributor-and-vendor-neutral-core.md): neutral core; [intent separation](docs/adr/ADR-0002-separate-engineering-intent-from-engineering-contribution.md); [evidence and cause ownership](docs/adr/ADR-0003-preserve-evidence-and-terminal-causality.md).
+3. [Executable scenario guide](docs/scenarios/reference-scenario-001.md): the small application and its three reference surfaces.
+4. [Architecture Challenge](docs/challenge/architecture-challenge.md): inspect another project using evidence, without requiring it to copy this design.
 
-Future decisions will be added only when an architectural choice has been exercised enough to justify a durable decision record.
+Use Node.js 22.12 or later within the supported Node versions declared by the package and CI configuration.
 
-Current implementation experiments are documented separately through focused review records under `docs/reviews/`.
+```sh
+npm ci
+npm test
+npm run typecheck
+```
 
----
+The tests are the executable entry point. Start with [the multi-stage scenario](src/scenarios/duplicate-username-workflow.ts), [its tests](tests/duplicate-username-workflow.test.ts), and [the v1 failure matrix](tests/v1-failure-matrix.test.ts). The [contracts guide](docs/contracts/core-contracts.md) and [domain vocabulary](docs/domain/engineering-domain.md) explain the code without requiring every historical review.
 
-## Status
+## Current boundary and stop point
 
-Active reference architecture under incremental development.
+- [x] Contributor- and vendor-neutral domain/core contracts, with substitutable local contributors.
+- [x] Structured intent requirements driving deterministic evaluation in both engineering reference paths.
+- [x] Capability and policy denial before executor invocation.
+- [x] Dependency-driven progression, fan-in, bounded handoffs, and per-stage selection.
+- [x] Independent acceptance evidence surviving into evaluation with its original provenance.
+- [x] Execution failure, engineering rejection, and unreachable validation distinguished through terminal outcome.
+- [x] Reusable evidence-oriented review challenge and [copy/paste review prompt](docs/challenge/project-review-prompt.md).
 
-The project began with principles and contracts and now includes executable reference implementations that pressure-test those architectural claims.
+Human approvals, operating-system isolation, credential management, real contributor/platform adapters, durable execution, recovery, retries, and parallel scheduling are intentionally deferred. Contract fields describing future concerns are not evidence of enforcement. There is no delivery adapter, approval UI, protocol client, or production security claim.
 
-Current milestones:
+v1 stops here. The next experiment should be justified by an actual external project's assessment, not by the availability of another platform feature. A [2026 landscape cross-check](docs/reviews/2026-landscape-alignment-review.md) records current external pressure without importing vendor-specific semantics into core.
 
-- [x] Define project purpose
-- [x] Establish contributor- and vendor-neutral principles
-- [x] Define the initial reference flow
-- [x] Establish foundational architecture decisions
-- [x] Separate engineering intent from engineering contribution
-- [x] Formalize core engineering contracts
-- [x] Implement deterministic governance
-- [x] Implement bounded capability authorization
-- [x] Capture structured governance and execution evidence
-- [x] Implement deterministic evidence evaluation
-- [x] Resolve evaluations into workflow outcomes
-- [x] Demonstrate contributor substitutability
-- [x] Implement contributor selection strategy
-- [x] Validate reference-scenario engineering outcomes against explicit acceptance checks
-- [x] Link contributor-produced results to engineering outcomes
-- [x] Preserve validator-produced evidence through multi-stage evaluation
-- [x] Execute multi-stage workflows
-- [x] Implement bounded handoffs between workflow stages
-- [x] Make workflow progression dependency-driven
-- [x] Handle multiple upstream dependencies and fan-in
-- [x] Select contributors independently across workflow stages
-- [x] Preserve per-stage capability and policy boundaries
-- [x] Preserve failure causality through terminal workflow outcomes
-- [x] Emit structured contribution failure causes at the contribution boundary
-- [x] Distinguish failed engineering validation from unreachable evaluation
-- [x] Centralize evaluation applicability decisions across reference scenarios
-- [ ] Introduce approval boundaries
-- [ ] Add an isolated execution environment
-- [ ] Add an SDLC platform adapter
-- [ ] Demonstrate multiple real contributor technologies
+## History and source availability
 
----
+The [maturation audit](docs/reviews/v1-maturation-review.md) records the starting baseline and decisions made to finish v1. Earlier files under `docs/reviews/` are historical experiments; their “next experiment” sections are not the current backlog.
 
-## Source Availability
-
-This repository is publicly available for portfolio and reference purposes. No open-source license is currently granted.
+This repository is publicly available for portfolio and reference purposes. No open-source license is currently granted. This statement describes the current repository posture.

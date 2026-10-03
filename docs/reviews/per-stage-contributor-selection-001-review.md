@@ -1,5 +1,7 @@
 # Per-Stage Contributor Selection 001 Review
 
+> Historical experiment at commit `3930d96`. Findings and next steps describe that revision, not current v1. See the [current capability matrix](../v1-capability-matrix.md) and [maturation review](v1-maturation-review.md).
+
 ## Purpose
 
 This review records the architectural findings from extending contributor selection across multiple workflow stages.

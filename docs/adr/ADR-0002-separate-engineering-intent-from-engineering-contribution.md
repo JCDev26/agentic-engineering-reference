@@ -4,6 +4,8 @@
 - **Date:** 2026-08-07
 - **Decision Owners:** Project Maintainer
 
+> v1 validation update (2026-10-02): both engineering reference scenarios consume `EngineeringIntent.evaluationRequirements`, and tests change evaluation by changing only those structured requirements. Human-readable acceptance criteria remain separate and are not parsed. Local contributor substitution is proven; approval and real contributor integrations remain deferred. See the [current capability matrix](../v1-capability-matrix.md).
+
 ---
 
 # Context

@@ -1,5 +1,7 @@
 # Engineering Outcome 001 Review
 
+> Historical experiment at commit `734b0c2`. Findings and next steps describe that revision, not current v1. See the [current capability matrix](../v1-capability-matrix.md) and [maturation review](v1-maturation-review.md).
+
 ## Purpose
 
 This review records the architectural findings from extending Reference Scenario 001 beyond governed execution and into deterministic engineering-outcome validation.

@@ -1,5 +1,7 @@
 # Validation Evidence Provenance 001 Review
 
+> Historical experiment at commit `dfdaae5`. Findings and next steps describe that revision, not current v1. See the [current capability matrix](../v1-capability-matrix.md) and [maturation review](v1-maturation-review.md).
+
 ## Purpose
 
 This review records the architectural findings from preserving validator-produced evidence through the multi-stage workflow.

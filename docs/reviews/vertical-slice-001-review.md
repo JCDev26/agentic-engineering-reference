@@ -1,5 +1,7 @@
 # Vertical Slice 001 Review
 
+> Historical experiment at commit `2cb00f9`. Findings and next steps describe that revision, not current v1. See the [current capability matrix](../v1-capability-matrix.md) and [maturation review](v1-maturation-review.md).
+
 ## Purpose
 
 This review captures the architectural lessons from the first executable vertical slice of the Agentic Engineering Reference.

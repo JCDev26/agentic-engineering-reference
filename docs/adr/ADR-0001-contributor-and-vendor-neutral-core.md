@@ -4,6 +4,8 @@
 - **Date:** 2026-08-07
 - **Decision Owners:** Project Maintainer
 
+> v1 validation update (2026-10-02): the contributor-neutral core and local substitutability are executable. Real platform portability, human/AI adapters, approvals, and isolated execution remain deferred. The examples and future considerations below retain the original decision's conceptual scope; see the [current capability matrix](../v1-capability-matrix.md).
+
 ---
 
 # Context
