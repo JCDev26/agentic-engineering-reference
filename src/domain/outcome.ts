@@ -15,6 +15,8 @@ export type OutcomeReasonCode =
   | "engineering-validation-failed"
   | "dependency-deadlock"
   | "missing-stage-binding"
+  | "evaluation-inconclusive"
+  | "evaluation-requires-review"
   | "evaluation-failed";
 
 export interface Outcome {

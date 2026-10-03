@@ -1,13 +1,5 @@
-import type { Evaluation } from "../domain/evaluation.js";
-import type {
-  Evidence,
-  EvidenceType,
-} from "../domain/evidence.js";
-
-export interface EvidenceRequirement {
-  type: EvidenceType;
-  metadata?: Record<string, unknown>;
-}
+import type { Evaluation, EvidenceRequirement } from "../domain/evaluation.js";
+import type { Evidence } from "../domain/evidence.js";
 
 export interface EvaluationRequest {
   id: string;
@@ -25,13 +17,13 @@ export interface Evaluator {
 
 export class DeterministicEvaluator implements Evaluator {
   evaluate(request: EvaluationRequest): Evaluation {
-    if (request.applicable === false) {
+    if (request.applicable === false || request.requirements.length === 0) {
       return {
         id: request.id,
         targetId: request.targetId,
         targetType: request.targetType,
         criteria: request.requirements.map((requirement) =>
-          this.describeRequirement(requirement)
+          this.describeRequirement(requirement),
         ),
         evidence: request.evidence,
         result: "inconclusive",
@@ -39,55 +31,61 @@ export class DeterministicEvaluator implements Evaluator {
         confidence: 1,
         findings: [
           request.inapplicableReason ??
-            "Engineering evaluation was not applicable because the workflow did not reach the required validation boundary.",
+            (request.requirements.length === 0
+              ? "Engineering evaluation has no structured requirements."
+              : "Engineering evaluation was not applicable because the workflow did not reach the required validation boundary."),
         ],
       };
     }
 
-    const failedRequirements =
-      request.requirements.filter(
-        (requirement) =>
-          !request.evidence.some((evidence) =>
-            this.satisfiesRequirement(
-              evidence,
-              requirement
-            )
-          )
-      );
+    const failedRequirements = request.requirements.filter(
+      (requirement) =>
+        !request.evidence.some((evidence) =>
+          this.satisfiesRequirement(evidence, requirement),
+        ),
+    );
 
-    const passed =
-      failedRequirements.length === 0;
+    const passed = failedRequirements.length === 0;
 
     return {
       id: request.id,
       targetId: request.targetId,
       targetType: request.targetType,
-      criteria: request.requirements.map(
-        (requirement) =>
-          this.describeRequirement(requirement)
+      criteria: request.requirements.map((requirement) =>
+        this.describeRequirement(requirement),
       ),
       evidence: request.evidence,
       result: passed ? "passed" : "failed",
       evaluator: "deterministic-evaluator",
       confidence: 1,
       findings: passed
-        ? [
-            "All evidence requirements are satisfied.",
-          ]
+        ? ["All evidence requirements are satisfied."]
         : failedRequirements.map(
             (requirement) =>
               `Unsatisfied evidence requirement: ${this.describeRequirement(
-                requirement
-              )}`
+                requirement,
+              )}`,
           ),
     };
   }
 
   private satisfiesRequirement(
     evidence: Evidence,
-    requirement: EvidenceRequirement
+    requirement: EvidenceRequirement,
   ): boolean {
     if (evidence.type !== requirement.type) {
+      return false;
+    }
+    if (
+      requirement.producer !== undefined &&
+      evidence.producer !== requirement.producer
+    ) {
+      return false;
+    }
+    if (
+      requirement.contributionId !== undefined &&
+      evidence.contributionId !== requirement.contributionId
+    ) {
       return false;
     }
 
@@ -99,30 +97,30 @@ export class DeterministicEvaluator implements Evaluator {
       return false;
     }
 
-    return Object.entries(
-      requirement.metadata
-    ).every(
-      ([key, expectedValue]) =>
-        evidence.metadata?.[key] ===
-        expectedValue
+    return Object.entries(requirement.metadata).every(
+      ([key, expectedValue]) => evidence.metadata?.[key] === expectedValue,
     );
   }
 
-  private describeRequirement(
-    requirement: EvidenceRequirement
-  ): string {
+  private describeRequirement(requirement: EvidenceRequirement): string {
+    const source = [
+      ...(requirement.producer !== undefined
+        ? [`producer=${JSON.stringify(requirement.producer)}`]
+        : []),
+      ...(requirement.contributionId !== undefined
+        ? [`contributionId=${JSON.stringify(requirement.contributionId)}`]
+        : []),
+    ];
+    const sourceDescription =
+      source.length > 0 ? ` from ${source.join(", ")}` : "";
     if (requirement.metadata === undefined) {
-      return `Evidence of type "${requirement.type}" is required.`;
+      return `Evidence of type "${requirement.type}"${sourceDescription} is required.`;
     }
 
-    const metadataRequirements =
-      Object.entries(requirement.metadata)
-        .map(
-          ([key, value]) =>
-            `${key}=${JSON.stringify(value)}`
-        )
-        .join(", ");
+    const metadataRequirements = Object.entries(requirement.metadata)
+      .map(([key, value]) => `${key}=${JSON.stringify(value)}`)
+      .join(", ");
 
-    return `Evidence of type "${requirement.type}" with ${metadataRequirements} is required.`;
+    return `Evidence of type "${requirement.type}"${sourceDescription} with ${metadataRequirements} is required.`;
   }
 }

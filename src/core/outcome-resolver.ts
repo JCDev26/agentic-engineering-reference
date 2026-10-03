@@ -16,86 +16,78 @@ export interface OutcomeResolutionRequest {
 }
 
 export interface OutcomeResolver {
-  resolve(
-    request: OutcomeResolutionRequest
-  ): Outcome;
+  resolve(request: OutcomeResolutionRequest): Outcome;
 }
 
-export class DeterministicOutcomeResolver
-  implements OutcomeResolver
-{
-  resolve(
-    request: OutcomeResolutionRequest
-  ): Outcome {
+export class DeterministicOutcomeResolver implements OutcomeResolver {
+  resolve(request: OutcomeResolutionRequest): Outcome {
     const workflowFailure =
       request.workflowRun?.status === "failed"
         ? request.workflowRun
         : undefined;
 
     if (workflowFailure !== undefined) {
-      const reasonCode =
-        this.mapWorkflowFailureReason(
-          workflowFailure.failureReason
-        );
+      const reasonCode = this.mapWorkflowFailureReason(
+        workflowFailure.failureReason,
+      );
 
       return {
         workflowId: request.workflowId,
         status: "failed",
         reasonCode,
-        summary:
-          this.describeFailure(reasonCode),
-        evidence:
-          request.evaluation.evidence,
-        ...(workflowFailure.failedStageId !==
-        undefined
+        summary: this.describeFailure(reasonCode),
+        evidence: request.evaluation.evidence,
+        ...(workflowFailure.failedStageId !== undefined
           ? {
-              failedStageId:
-                workflowFailure.failedStageId,
+              failedStageId: workflowFailure.failedStageId,
             }
           : {}),
-        ...(workflowFailure
-          .unresolvedStageIds !== undefined
+        ...(workflowFailure.unresolvedStageIds !== undefined
           ? {
-              unresolvedStageIds:
-                workflowFailure.unresolvedStageIds,
+              unresolvedStageIds: workflowFailure.unresolvedStageIds,
             }
           : {}),
       };
     }
 
+    if (request.evaluation.result === "requires-review") {
+      return {
+        workflowId: request.workflowId,
+        status: "escalated",
+        reasonCode: "evaluation-requires-review",
+        summary: this.describeFailure("evaluation-requires-review"),
+        evidence: request.evaluation.evidence,
+      };
+    }
+
     const status: OutcomeStatus =
-      request.evaluation.result === "passed"
-        ? "completed"
-        : "failed";
+      request.evaluation.result === "passed" ? "completed" : "failed";
 
     if (status === "completed") {
       return {
         workflowId: request.workflowId,
         status,
-        summary:
-          "Workflow completed with satisfied evaluation criteria.",
-        evidence:
-          request.evaluation.evidence,
+        summary: "Workflow completed with satisfied evaluation criteria.",
+        evidence: request.evaluation.evidence,
       };
     }
+
+    const reasonCode =
+      request.evaluation.result === "inconclusive"
+        ? "evaluation-inconclusive"
+        : "evaluation-failed";
 
     return {
       workflowId: request.workflowId,
       status,
-      reasonCode: "evaluation-failed",
-      summary:
-        this.describeFailure(
-          "evaluation-failed"
-        ),
-      evidence:
-        request.evaluation.evidence,
+      reasonCode,
+      summary: this.describeFailure(reasonCode),
+      evidence: request.evaluation.evidence,
     };
   }
 
   private mapWorkflowFailureReason(
-    reason:
-      | WorkflowFailureReason
-      | undefined
+    reason: WorkflowFailureReason | undefined,
   ): OutcomeReasonCode {
     switch (reason) {
       case "governance-denied":
@@ -120,9 +112,7 @@ export class DeterministicOutcomeResolver
     }
   }
 
-  private describeFailure(
-    reasonCode: OutcomeReasonCode
-  ): string {
+  private describeFailure(reasonCode: OutcomeReasonCode): string {
     switch (reasonCode) {
       case "governance-denied":
         return "Workflow failed because governance denied a required contribution.";
@@ -144,6 +134,12 @@ export class DeterministicOutcomeResolver
 
       case "evaluation-failed":
         return "Workflow failed because evaluation criteria were not satisfied.";
+
+      case "evaluation-inconclusive":
+        return "Workflow could not be completed because engineering evaluation was inconclusive.";
+
+      case "evaluation-requires-review":
+        return "Engineering evaluation requires review before a terminal engineering judgment can be made.";
     }
   }
 }

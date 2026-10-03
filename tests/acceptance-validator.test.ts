@@ -12,8 +12,7 @@ const contribution: Contribution = {
   id: "contribution-001",
   workflowId: "workflow-001",
   stageId: "implementation",
-  objective:
-    "Modify approved user-management source code.",
+  objective: "Modify approved user-management source code.",
   scope: ["src/"],
   contributorProfileId: "implementer",
   capabilityIds: ["source.write"],
@@ -24,28 +23,26 @@ const contribution: Contribution = {
     "command-output",
     "test-result",
   ],
-  completionCriteria: [
-    "Execution completes successfully.",
-  ],
+  completionCriteria: ["Execution completes successfully."],
 };
 
 describe("DuplicateUsernameAcceptanceValidator", () => {
   it("passes when the contributor produces duplicate-safe behavior", () => {
-    const execution =
-      new DuplicateSafeUserCreatorContributorExecutor().execute({
+    const execution = new DuplicateSafeUserCreatorContributorExecutor().execute(
+      {
         contribution,
         capabilityId: "source.write",
-      });
-
-    const validator =
-      new DuplicateUsernameAcceptanceValidator();
-
-    const evidence = validator.validate(
-      contribution.id,
-      execution
+      },
     );
 
-    expect(evidence.metadata).toMatchObject({
+    const validator = new DuplicateUsernameAcceptanceValidator();
+
+    const validation = validator.validate(contribution.id, execution);
+
+    expect(validation.status).toBe("completed");
+    if (validation.status !== "completed")
+      throw new Error("Validation unavailable");
+    expect(validation.evidence.metadata).toMatchObject({
       status: "passed",
       uniqueCreationPassed: true,
       duplicateRejectionPassed: true,
@@ -60,39 +57,33 @@ describe("DuplicateUsernameAcceptanceValidator", () => {
         capabilityId: "source.write",
       });
 
-    const validator =
-      new DuplicateUsernameAcceptanceValidator();
+    const validator = new DuplicateUsernameAcceptanceValidator();
 
-    const evidence = validator.validate(
-      contribution.id,
-      execution
-    );
+    const validation = validator.validate(contribution.id, execution);
 
     expect(execution.status).toBe("succeeded");
 
-    expect(evidence.metadata).toMatchObject({
+    expect(validation.status).toBe("completed");
+    if (validation.status !== "completed")
+      throw new Error("Validation unavailable");
+    expect(validation.evidence.metadata).toMatchObject({
       status: "failed",
       duplicateRejectionPassed: false,
     });
   });
 
-  it("fails when execution produces no recognized implementation artifact", () => {
-    const validator =
-      new DuplicateUsernameAcceptanceValidator();
+  it("reports validation unavailable when execution produces no recognized implementation artifact", () => {
+    const validator = new DuplicateUsernameAcceptanceValidator();
 
-    const evidence = validator.validate(
-      contribution.id,
-      {
-        status: "succeeded",
-        contributionId: contribution.id,
-        capabilityId: "source.write",
-        summary:
-          "Execution succeeded without an implementation artifact.",
-      }
-    );
+    const validation = validator.validate(contribution.id, {
+      status: "succeeded",
+      contributionId: contribution.id,
+      capabilityId: "source.write",
+      summary: "Execution succeeded without an implementation artifact.",
+    });
 
-    expect(evidence.metadata).toMatchObject({
-      status: "failed",
+    expect(validation).toEqual({
+      status: "unavailable",
       reason:
         "No recognized user-creator implementation artifact was provided.",
     });
