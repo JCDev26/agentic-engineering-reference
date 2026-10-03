@@ -11,9 +11,7 @@ import {
 import { DeterministicExecutor } from "../src/core/executor.js";
 
 import type { Contribution } from "../src/domain/contribution.js";
-import type {
-  ContributorProfile,
-} from "../src/domain/contributor.js";
+import type { ContributorProfile } from "../src/domain/contributor.js";
 
 const contribution: Contribution = {
   id: "contribution-001",
@@ -29,28 +27,19 @@ const contribution: Contribution = {
     "policy-result",
     "command-output",
   ],
-  completionCriteria: [
-    "Execution completes successfully.",
-  ],
+  completionCriteria: ["Execution completes successfully."],
 };
 
 const contributorProfile: ContributorProfile = {
   id: "implementer",
   role: "implementer",
-  responsibilities: [
-    "Perform bounded source implementation.",
-  ],
+  responsibilities: ["Perform bounded source implementation."],
   allowedCapabilityIds: ["source.write"],
   requiredPolicyIds: ["source-scope"],
-  preferredContributorTypes: [
-    "automation",
-    "external-service",
-  ],
+  preferredContributorTypes: ["automation", "external-service"],
 };
 
-function deterministicCandidate(
-  available = true
-): ContributorCandidate {
+function deterministicCandidate(available = true): ContributorCandidate {
   return {
     contributor: {
       id: "local-automation",
@@ -59,9 +48,7 @@ function deterministicCandidate(
       available,
       provider: "reference-local",
     },
-    executor: new DeterministicContributorExecutor(
-      new DeterministicExecutor()
-    ),
+    executor: new DeterministicContributorExecutor(new DeterministicExecutor()),
   };
 }
 
@@ -79,9 +66,17 @@ function simulatedCandidate(): ContributorCandidate {
 }
 
 describe("DeterministicContributionStrategy", () => {
+  it("rejects a contribution that omits a profile's required policy", () => {
+    const result = new DeterministicContributionStrategy().select({
+      contribution: { ...contribution, policyIds: [] },
+      contributorProfile,
+      candidates: [deterministicCandidate()],
+    });
+    expect(result).toMatchObject({ selected: false });
+  });
+
   it("selects an available contributor with the required capabilities", () => {
-    const strategy =
-      new DeterministicContributionStrategy();
+    const strategy = new DeterministicContributionStrategy();
 
     const result = strategy.select({
       contribution,
@@ -92,15 +87,12 @@ describe("DeterministicContributionStrategy", () => {
     expect(result.selected).toBe(true);
 
     if (result.selected) {
-      expect(result.candidate.contributor.id).toBe(
-        "local-automation"
-      );
+      expect(result.candidate.contributor.id).toBe("local-automation");
     }
   });
 
   it("does not select an unavailable contributor", () => {
-    const strategy =
-      new DeterministicContributionStrategy();
+    const strategy = new DeterministicContributionStrategy();
 
     const result = strategy.select({
       contribution,
@@ -116,34 +108,25 @@ describe("DeterministicContributionStrategy", () => {
   });
 
   it("uses contributor profile preferences when multiple contributors are eligible", () => {
-    const strategy =
-      new DeterministicContributionStrategy();
+    const strategy = new DeterministicContributionStrategy();
 
     const result = strategy.select({
       contribution,
       contributorProfile,
-      candidates: [
-        simulatedCandidate(),
-        deterministicCandidate(),
-      ],
+      candidates: [simulatedCandidate(), deterministicCandidate()],
     });
 
     expect(result.selected).toBe(true);
 
     if (result.selected) {
-      expect(result.candidate.contributor.type).toBe(
-        "automation"
-      );
+      expect(result.candidate.contributor.type).toBe("automation");
 
-      expect(result.candidate.contributor.id).toBe(
-        "local-automation"
-      );
+      expect(result.candidate.contributor.id).toBe("local-automation");
     }
   });
 
   it("rejects selection when the contributor lacks a granted capability", () => {
-    const strategy =
-      new DeterministicContributionStrategy();
+    const strategy = new DeterministicContributionStrategy();
 
     const incapableCandidate: ContributorCandidate = {
       contributor: {
@@ -153,7 +136,7 @@ describe("DeterministicContributionStrategy", () => {
         available: true,
       },
       executor: new DeterministicContributorExecutor(
-        new DeterministicExecutor()
+        new DeterministicExecutor(),
       ),
     };
 
@@ -167,8 +150,7 @@ describe("DeterministicContributionStrategy", () => {
   });
 
   it("rejects selection when the contributor profile does not permit the contribution capabilities", () => {
-    const strategy =
-      new DeterministicContributionStrategy();
+    const strategy = new DeterministicContributionStrategy();
 
     const restrictedProfile: ContributorProfile = {
       ...contributorProfile,
@@ -189,134 +171,92 @@ describe("DeterministicContributionStrategy", () => {
   });
 
   it("selects a validator contributor that satisfies the validator profile", () => {
-    const strategy =
-      new DeterministicContributionStrategy();
-  
+    const strategy = new DeterministicContributionStrategy();
+
     const validationContribution: Contribution = {
       id: "validation-contribution",
       workflowId: "workflow-001",
       stageId: "validation",
-      objective:
-        "Validate implementation artifact.",
+      objective: "Validate implementation artifact.",
       scope: ["reference-app:"],
-      contributorProfileId:
-        "validator",
-      capabilityIds: [
-        "validation.execute",
-      ],
-      policyIds: [
-        "validation-artifact-scope",
-      ],
+      contributorProfileId: "validator",
+      capabilityIds: ["validation.execute"],
+      policyIds: ["validation-artifact-scope"],
       evidenceRequirements: [],
       completionCriteria: [],
     };
-  
+
     const validatorProfile: ContributorProfile = {
       id: "validator",
       role: "validator",
-      responsibilities: [
-        "Validate implementation artifacts.",
-      ],
-      allowedCapabilityIds: [
-        "validation.execute",
-      ],
-      requiredPolicyIds: [
-        "validation-artifact-scope",
-      ],
+      responsibilities: ["Validate implementation artifacts."],
+      allowedCapabilityIds: ["validation.execute"],
+      requiredPolicyIds: ["validation-artifact-scope"],
     };
-  
+
     const validatorCandidate: ContributorCandidate = {
       contributor: {
         id: "validator-001",
         type: "automation",
-        capabilityIds: [
-          "validation.execute",
-        ],
+        capabilityIds: ["validation.execute"],
         available: true,
       },
-      executor:
-        new SimulatedContributorExecutor(),
+      executor: new SimulatedContributorExecutor(),
     };
-  
+
     const result = strategy.select({
-      contribution:
-        validationContribution,
-      contributorProfile:
-        validatorProfile,
-      candidates: [
-        validatorCandidate,
-      ],
+      contribution: validationContribution,
+      contributorProfile: validatorProfile,
+      candidates: [validatorCandidate],
     });
-  
+
     expect(result.selected).toBe(true);
-  
+
     if (result.selected) {
-      expect(
-        result.candidate.contributor.id
-      ).toBe("validator-001");
+      expect(result.candidate.contributor.id).toBe("validator-001");
     }
   });
-  
+
   it("does not treat implementation capability as sufficient for validation selection", () => {
-    const strategy =
-      new DeterministicContributionStrategy();
-  
+    const strategy = new DeterministicContributionStrategy();
+
     const validationContribution: Contribution = {
       id: "validation-contribution",
       workflowId: "workflow-001",
       stageId: "validation",
-      objective:
-        "Validate implementation artifact.",
+      objective: "Validate implementation artifact.",
       scope: ["reference-app:"],
-      contributorProfileId:
-        "validator",
-      capabilityIds: [
-        "validation.execute",
-      ],
-      policyIds: [
-        "validation-artifact-scope",
-      ],
+      contributorProfileId: "validator",
+      capabilityIds: ["validation.execute"],
+      policyIds: ["validation-artifact-scope"],
       evidenceRequirements: [],
       completionCriteria: [],
     };
-  
+
     const validatorProfile: ContributorProfile = {
       id: "validator",
       role: "validator",
-      responsibilities: [
-        "Validate implementation artifacts.",
-      ],
-      allowedCapabilityIds: [
-        "validation.execute",
-      ],
-      requiredPolicyIds: [
-        "validation-artifact-scope",
-      ],
+      responsibilities: ["Validate implementation artifacts."],
+      allowedCapabilityIds: ["validation.execute"],
+      requiredPolicyIds: ["validation-artifact-scope"],
     };
-  
+
     const implementationOnlyCandidate: ContributorCandidate = {
       contributor: {
         id: "implementation-only",
         type: "automation",
-        capabilityIds: [
-          "source.write",
-        ],
+        capabilityIds: ["source.write"],
         available: true,
       },
-      executor:
-        new SimulatedContributorExecutor(),
+      executor: new SimulatedContributorExecutor(),
     };
-  
+
     const result = strategy.select({
-      contribution:
-        validationContribution,
-      contributorProfile:
-        validatorProfile,
-      candidates: [
-        implementationOnlyCandidate,
-      ],
+      contribution: validationContribution,
+      contributorProfile: validatorProfile,
+      candidates: [implementationOnlyCandidate],
     });
-  
+
     expect(result).toEqual({
       selected: false,
       reason:

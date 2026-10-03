@@ -1,26 +1,15 @@
 import type { Contribution } from "../domain/contribution.js";
 import type { Evidence } from "../domain/evidence.js";
-import type {
-  Policy,
-  PolicyContext,
-} from "../domain/policy.js";
+import type { Policy, PolicyContext } from "../domain/policy.js";
 
 import type { EvidenceRecorder } from "./evidence-recorder.js";
-import type {
-  ExecutionResult,
-  Executor,
-} from "./executor.js";
+import type { ExecutionResult, Executor } from "./executor.js";
 import type { PolicyEngine } from "./policy-engine.js";
 
-export type ContributionRunStatus =
-  | "blocked"
-  | "executed"
-  | "execution-failed";
+export type ContributionRunStatus = "blocked" | "executed" | "execution-failed";
 
 export type ContributionFailureReason =
-  | "capability-denied"
-  | "policy-denied"
-  | "execution-failed";
+  "capability-denied" | "policy-denied" | "execution-failed";
 
 export interface ContributionRunResult {
   status: ContributionRunStatus;
@@ -39,149 +28,136 @@ export interface ContributionExecutionRequest {
 
 export class ContributionRunner {
   constructor(
-    private readonly policyEngine:
-      PolicyEngine,
-    private readonly evidenceRecorder:
-      EvidenceRecorder,
-    private readonly executor:
-      Executor
+    private readonly policyEngine: PolicyEngine,
+    private readonly evidenceRecorder: EvidenceRecorder,
+    private readonly executor: Executor,
   ) {}
 
-  run(
-    request: ContributionExecutionRequest
-  ): ContributionRunResult {
-    const capabilityGranted =
-      request.contribution.capabilityIds.includes(
-        request.requestedCapabilityId
-      );
+  run(request: ContributionExecutionRequest): ContributionRunResult {
+    const capabilityGranted = request.contribution.capabilityIds.includes(
+      request.requestedCapabilityId,
+    );
 
-    const capabilityEvidence =
-      this.evidenceRecorder.recordCapabilityDecision({
-        contributionId:
-          request.contribution.id,
-        capabilityId:
-          request.requestedCapabilityId,
-        granted:
-          capabilityGranted,
-        ...(!capabilityGranted
-          ? {
-              reason:
-                "Capability is not granted to this contribution.",
-            }
-          : {}),
-      });
+    const capabilityEvidence = this.evidenceRecorder.recordCapabilityDecision({
+      contributionId: request.contribution.id,
+      capabilityId: request.requestedCapabilityId,
+      granted: capabilityGranted,
+      ...(!capabilityGranted
+        ? {
+            reason: "Capability is not granted to this contribution.",
+          }
+        : {}),
+    });
 
     if (!capabilityGranted) {
       return {
         status: "blocked",
-        contributionId:
-          request.contribution.id,
-        evidence: [
-          capabilityEvidence,
-        ],
-        failureReason:
-          "capability-denied",
+        contributionId: request.contribution.id,
+        evidence: [capabilityEvidence],
+        failureReason: "capability-denied",
       };
     }
 
     const context: PolicyContext = {
-      contributionId:
-        request.contribution.id,
-      requestedCapabilityId:
-        request.requestedCapabilityId,
-      ...(request.requestedTarget !==
-      undefined
+      contributionId: request.contribution.id,
+      requestedCapabilityId: request.requestedCapabilityId,
+      ...(request.requestedTarget !== undefined
         ? {
-            requestedTarget:
-              request.requestedTarget,
+            requestedTarget: request.requestedTarget,
           }
         : {}),
     };
 
-    const decisions =
-      this.policyEngine.evaluate(
-        request.policies,
-        context
-      );
+    const decisions = this.policyEngine.evaluate(request.policies, context);
 
-    const policyEvidence =
-      decisions.map((decision) =>
+    const policyEvidence = decisions.map((decision) =>
+      this.evidenceRecorder.recordPolicyDecision(context, decision),
+    );
+
+    // A declared policy must have exactly one definition; omission is not a grant.
+    const unavailablePolicyEvidence = request.contribution.policyIds
+      .filter(
+        (id) =>
+          request.policies.filter((policy) => policy.id === id).length !== 1,
+      )
+      .map((policyId) =>
         this.evidenceRecorder.recordPolicyDecision(
           context,
-          decision
-        )
+          {
+            allowed: false,
+            policyId,
+            reason: "Required policy definition is missing or ambiguous.",
+            action: "deny",
+          },
+          "contribution-runner",
+        ),
       );
 
     const preExecutionEvidence = [
       capabilityEvidence,
       ...policyEvidence,
+      ...unavailablePolicyEvidence,
     ];
 
     const blocked =
-      decisions.some(
-        (decision) =>
-          !decision.allowed
-      );
+      unavailablePolicyEvidence.length > 0 ||
+      decisions.some((decision) => !decision.allowed);
 
     if (blocked) {
       return {
         status: "blocked",
-        contributionId:
-          request.contribution.id,
-        evidence:
-          preExecutionEvidence,
-        failureReason:
-          "policy-denied",
+        contributionId: request.contribution.id,
+        evidence: preExecutionEvidence,
+        failureReason: "policy-denied",
       };
     }
 
-    const execution =
-      this.executor.execute({
-        contribution:
-          request.contribution,
-        capabilityId:
-          request.requestedCapabilityId,
-        ...(request.requestedTarget !==
-        undefined
+    let execution: ExecutionResult;
+    let executionProducer = "executor";
+    try {
+      execution = this.executor.execute({
+        contribution: request.contribution,
+        capabilityId: request.requestedCapabilityId,
+        ...(request.requestedTarget !== undefined
           ? {
-              target:
-                request.requestedTarget,
+              target: request.requestedTarget,
             }
           : {}),
       });
+    } catch {
+      executionProducer = "contribution-runner";
+      execution = {
+        status: "failed",
+        contributionId: request.contribution.id,
+        capabilityId: request.requestedCapabilityId,
+        summary: "Executor threw before returning a result.",
+      };
+    }
 
-    const executionEvidence =
-      this.evidenceRecorder.recordExecutionResult(
-        execution
-      );
+    const executionEvidence = this.evidenceRecorder.recordExecutionResult(
+      execution,
+      executionProducer,
+    );
 
-    const producedEvidence =
-      execution.evidence ?? [];
+    const producedEvidence = execution.evidence ?? [];
 
-    if (
-      execution.status ===
-      "failed"
-    ) {
+    if (execution.status === "failed") {
       return {
-        status:
-          "execution-failed",
-        contributionId:
-          request.contribution.id,
+        status: "execution-failed",
+        contributionId: request.contribution.id,
         evidence: [
           ...preExecutionEvidence,
           executionEvidence,
           ...producedEvidence,
         ],
         execution,
-        failureReason:
-          "execution-failed",
+        failureReason: "execution-failed",
       };
     }
 
     return {
       status: "executed",
-      contributionId:
-        request.contribution.id,
+      contributionId: request.contribution.id,
       evidence: [
         ...preExecutionEvidence,
         executionEvidence,

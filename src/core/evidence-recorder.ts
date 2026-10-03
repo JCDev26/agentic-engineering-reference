@@ -1,8 +1,5 @@
 import type { Evidence } from "../domain/evidence.js";
-import type {
-  PolicyContext,
-  PolicyDecision,
-} from "../domain/policy.js";
+import type { PolicyContext, PolicyDecision } from "../domain/policy.js";
 import type { ExecutionResult } from "./executor.js";
 
 export interface CapabilityDecision {
@@ -15,22 +12,20 @@ export interface CapabilityDecision {
 export interface EvidenceRecorder {
   recordPolicyDecision(
     context: PolicyContext,
-    decision: PolicyDecision
+    decision: PolicyDecision,
+    producer?: string,
   ): Evidence;
 
-  recordCapabilityDecision(
-    decision: CapabilityDecision
-  ): Evidence;
+  recordCapabilityDecision(decision: CapabilityDecision): Evidence;
 
-  recordExecutionResult(
-    result: ExecutionResult
-  ): Evidence;
+  recordExecutionResult(result: ExecutionResult, producer?: string): Evidence;
 }
 
 export class InMemoryEvidenceRecorder implements EvidenceRecorder {
   recordPolicyDecision(
     context: PolicyContext,
-    decision: PolicyDecision
+    decision: PolicyDecision,
+    producer = "deterministic-policy-engine",
   ): Evidence {
     return {
       id: crypto.randomUUID(),
@@ -38,7 +33,7 @@ export class InMemoryEvidenceRecorder implements EvidenceRecorder {
       type: "policy-result",
       timestamp: new Date().toISOString(),
       contentReference: `policy:${decision.policyId}`,
-      producer: "deterministic-policy-engine",
+      producer,
       metadata: {
         requestedCapabilityId: context.requestedCapabilityId,
         requestedTarget: context.requestedTarget,
@@ -46,16 +41,14 @@ export class InMemoryEvidenceRecorder implements EvidenceRecorder {
         ...(decision.allowed
           ? {}
           : {
-            reason: decision.reason,
-            action: decision.action,
-          }),
+              reason: decision.reason,
+              action: decision.action,
+            }),
       },
     };
   }
 
-  recordCapabilityDecision(
-    decision: CapabilityDecision
-  ): Evidence {
+  recordCapabilityDecision(decision: CapabilityDecision): Evidence {
     return {
       id: crypto.randomUUID(),
       contributionId: decision.contributionId,
@@ -66,15 +59,14 @@ export class InMemoryEvidenceRecorder implements EvidenceRecorder {
       metadata: {
         capabilityId: decision.capabilityId,
         granted: decision.granted,
-        ...(decision.reason !== undefined
-          ? { reason: decision.reason }
-          : {}),
+        ...(decision.reason !== undefined ? { reason: decision.reason } : {}),
       },
     };
   }
 
   recordExecutionResult(
-    result: ExecutionResult
+    result: ExecutionResult,
+    producer = "executor",
   ): Evidence {
     return {
       id: crypto.randomUUID(),
@@ -82,15 +74,13 @@ export class InMemoryEvidenceRecorder implements EvidenceRecorder {
       type: "command-output",
       timestamp: new Date().toISOString(),
       contentReference: `execution:${result.contributionId}`,
-      producer: "executor",
+      producer,
       metadata: {
         capabilityId: result.capabilityId,
         status: result.status,
         summary: result.summary,
         artifactReferences:
-          result.artifacts?.map(
-            (artifact) => artifact.contentReference
-          ) ?? [],
+          result.artifacts?.map((artifact) => artifact.contentReference) ?? [],
       },
     };
   }
