@@ -1,12 +1,14 @@
 # Copy/paste project review prompt
 
-Copy the text below into a software-engineering agent working inside the target repository. This prompt is self-contained; it does not require the target to install or adopt this reference architecture.
+Open the target repository in a repository-aware coding/software-engineering agent and copy everything below the divider into it. No project-specific architecture configuration or installation of this reference is required. All twenty questions and the evidence rules are included. For the first full assessment, prefer a strong coding/reasoning model with high/deep reasoning when available and repo-wide read access. The initial assessment is read-only.
 
 ---
 
-Review this repository using the Agentic Engineering Reference Architecture Challenge. Do not modify the repository. Assess the actual architecture and its stated scope, not whether it resembles a particular framework or vendor's design.
+Review the repository currently open in this workspace using the Agentic Engineering Reference Architecture Challenge. No project-specific architecture configuration or reference installation is required. Keep this initial assessment read-only; do not modify the repository. Understand the target in its own vocabulary and architecture. Assess its actual behavior and stated scope, not whether it resembles a particular framework or vendor's design. For a first full assessment, a strong repository-aware coding/reasoning agent with high/deep reasoning is recommended; no vendor is required.
 
-First read repository guidance and inspect the tree, entry points, architecture documentation, contracts, execution paths, authorization, adapters, tests, and CI. Inspect relevant history when it explains a design decision. Record the revision, review date, reviewed scope, intended users, trust boundary, and access limitations. Do not treat the README as proof.
+First read repository guidance and inspect the tree, entry points, architecture documentation, contracts, execution paths, authorization, adapters, tests, configuration, and CI definitions/results where available. Inspect relevant history when it explains a design decision. Record the revision, review date, reviewed scope, intended users, trust boundary, and access limitations. Treat docs as claims until supported by implementation or appropriate evidence.
+
+Reviewer capability affects review depth. Repository evidence determines what can actually be claimed. A README claim is not implementation proof; a test's existence is not a successful run; a test inspected is not a test run. A strong model with README-only access cannot supply strong behavioral evidence. If infrastructure, CI, external services, private repositories, or runtime configuration are inaccessible, record that limitation and use unsupported/unproven where appropriate. Do not guess.
 
 You may run existing safe local checks if authorized and dependencies are already available. Follow repository instructions. Do not install dependencies, access production data, contact external services, make changes, commit, push, or publish the review without authorization. State exact commands/results you actually ran. If checks were only inspected, say so; missing access is not evidence of failure.
 
@@ -37,16 +39,18 @@ Assess all 20 questions below, using the target project's vocabulary:
 
 Classify each question as exactly one of:
 
-- **conforms:** inspected implementation and executable evidence support the belief within the stated scope.
+- **conforms:** appropriate inspected evidence supports the belief within the stated scope. Behavioral claims require implementation and executable evidence; documentary commitments require documentary support, not a claim of runtime enforcement.
 - **intentionally differs:** a substantiated different tradeoff serves this project's needs; explain its replacement behavior and consequences.
 - **partially supported:** part is supported, but a meaningful boundary remains unproven.
 - **unsupported/unproven:** insufficient evidence for an applicable claim, or an observed contradiction. Distinguish those two situations.
 - **not applicable:** the concern does not apply to this project's actual scope; explain why.
 
-For each classification provide: claim ID, evidence references (file and symbol/test; command and result if run), rationale, concrete risk or limit, and smallest follow-up or justified “none.” Require executable evidence for “conforms.” For missing evidence state where you looked. A dependency's marketing or available feature is not evidence of this project's integration.
+For each classification provide: claim ID, evidence references (file and symbol/test; command and result if run), rationale, concrete risk or limit, and smallest follow-up or justified “none.” Require executable evidence for behavioral claims labeled “conforms.” Identify evidence type: implementation inspected, tests inspected but not run, checks actually executed, observed CI results, or documentary statements. Non-goals, stop policies, intentionally deferred capabilities, and future maintainer commitments are inherently documentary; do not pretend tests prove future commitments or prose proves runtime enforcement. For missing evidence state where you looked. A dependency's marketing or available feature is not evidence of this project's integration.
 
 Do not penalize intentional architectural differences. Ordinary applications can satisfy these beliefs through functions, services, authorization, tests, CI, and ordinary human review. They do not need named Intent/Contributor/Evidence objects, AI agents, a workflow framework, multiple vendors, MCP, A2A, event buses, containers, or a generic policy engine. Use “not applicable” for agent concepts that have no meaningful equivalent; do not hide an actual requirement behind it.
 
-Deliver a concise report with: project/scope/trust assumptions; the traced operation; the 20 classifications and evidence; confirmed defects separated from unproven claims and intentional limits; the weakest consequential boundary; the smallest improvement with a test that would prove it; exact validation performed; and a bounded verdict with unknowns and a stop recommendation.
+Deliver a concise report with: project/scope/trust assumptions; the traced operation; the 20 classifications and evidence; confirmed defects separated from unproven claims and intentional limits; the weakest consequential boundary; the smallest justified improvement with a test that would prove it, or justified “none”; exact validation performed; and a bounded verdict with unknowns and a stop recommendation. Determine whether a concrete defect exists. No defect found is a valid outcome. “No implementation change is currently earned” is a successful assessment; do not manufacture work.
 
-Prioritize realistic triggers and consequences. Do not generate a purity score, infer architecture automatically from syntax, invent findings, or propose speculative infrastructure. Recommend only improvements supported by the project's needs and inspected evidence.
+Prioritize realistic triggers and consequences. There is no numerical score. Do not infer architecture automatically from syntax, invent findings, or propose speculative infrastructure. Recommend only improvements supported by the project's needs and inspected evidence. This assessment is not certification, security certification, an automatic refactoring tool, an architecture purity test, or a requirement to use AI.
+
+The Challenge does not authorize implementation. Present findings for human review; the engineer/team decides whether a finding is legitimate. If it is not accepted, stop. If it is accepted, bounded implementation still requires separate human authorization. After an authorized fix, a follow-up may reassess only the affected claims and causal path rather than all C01–C20.
