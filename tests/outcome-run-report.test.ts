@@ -25,3 +25,11 @@ test("technical failure and cancellation remain distinct in the native observati
   expect(report.technical).toBe("inconclusive");
   expect(report.native.status).toBe("cancelled");
 });
+
+test("engineering review need does not automatically make visual review applicable", () => {
+  const native: Outcome = { ...base, status: "escalated", reasonCode: "evaluation-requires-review" };
+  const report = reportOutcome(native, context, { applicability: "not-applicable", rationale: "This caller evaluates only a username-validation backend scenario." });
+  expect(report.engineeringReview).toBe("required");
+  expect(report.visual).toBe("not-applicable");
+  expect(report.native).toEqual(native);
+});

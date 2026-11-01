@@ -25,8 +25,9 @@ using supported tooling as a follow-up; this branch does not claim a clean secur
 
 ## Adoption boundary
 
-Versioned deterministic CI, fresh native evidence and human revision-bound review are the
-implemented foundation. A read-only CI diagnosis pilot or model-routing comparison remains
+Versioned deterministic checks and optional reporting adapters are implemented. Human
+revision-bound approval enforcement remains external/deferred, as documented in the v1
+capability matrix; no approval workflow or enforcement engine is added here. A read-only CI diagnosis pilot or model-routing comparison remains
 an optional future experiment. Evaluate accepted outcomes, retries, elapsed time and cost;
 do not enable paid inference, live orchestration, account rulesets or self-approved policy
 rewrites as a consequence of these reference updates. Preserve the bounded v1 stopping point.
