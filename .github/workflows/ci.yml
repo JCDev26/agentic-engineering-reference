@@ -7,6 +7,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   validate:
     runs-on: ubuntu-latest
@@ -23,5 +27,14 @@ jobs:
           node-version: ${{ matrix.node }}
           cache: npm
       - run: npm ci
-      - run: npm test
+      - run: npm test -- --reporter=default --reporter=junit --outputFile=artifacts/unit-tests.xml
       - run: npm run typecheck
+
+      - name: Retain native unit report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: reference-node-${{ matrix.node }}-${{ github.sha }}
+          path: artifacts/unit-tests.xml
+          retention-days: 7
+          if-no-files-found: warn

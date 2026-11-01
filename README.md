@@ -126,3 +126,11 @@ The [v1.0.0 release](https://github.com/JCDev26/agentic-engineering-reference/re
 The [maturation audit](docs/reviews/v1-maturation-review.md) records the completion decisions. Earlier [reviews](docs/reviews/) are historical experiments, not a backlog; the [landscape cross-check](docs/reviews/2026-landscape-alignment-review.md) records external pressure without importing vendor-specific semantics.
 
 This repository is publicly available for portfolio and reference purposes. No open-source license is currently granted.
+
+
+## Portable current-run observations
+
+See [run evidence v1](docs/run-evidence-v1.md) and the small, dependency-free adapters in
+`src/reporting/`. Native terminal APIs remain unchanged. The envelope adds tested revision,
+environment, time, named checks, and separate visual/owner states; it is not an evidence
+service or authenticated approval mechanism. Keep the project bounded and independently usable.
