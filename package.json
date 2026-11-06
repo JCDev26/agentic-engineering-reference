@@ -4,7 +4,9 @@
   "description": "A reference architecture for engineering contribution systems that coordinate humans, automation, pipelines, external services, and AI through shared workflows, governance, evidence, and review.",
   "scripts": {
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "reference:ci-review:build": "tsc --project tsconfig.ci-review.json",
+    "reference:ci-review": "node artifacts/ci-review/src/scenarios/ci-review-demo.js"
   },
   "repository": {
     "type": "git",

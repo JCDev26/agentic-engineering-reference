@@ -59,4 +59,4 @@ This does not establish absence of all vulnerabilities or exploitation.
 These checks ran before scenario source/tests were created. Native logs, JUnit,
 audit JSON and the maintenance diff snapshot are retained under the ignored
 `artifacts/validation/` directory. They are local observations, not new hosted CI.
-The fixture scenario and its combined validation remain a separate follow-up.
+Final combined validation is recorded in `docs/reviews/2026-11-01-ci-review-validation.md`.

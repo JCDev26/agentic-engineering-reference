@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": "artifacts/ci-review",
+    "rootDir": "."
+  },
+  "include": ["src/**/*.ts"]
+}
