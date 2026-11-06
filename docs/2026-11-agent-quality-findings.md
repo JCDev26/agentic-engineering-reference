@@ -31,3 +31,10 @@ capability matrix; no approval workflow or enforcement engine is added here. A r
 an optional future experiment. Evaluate accepted outcomes, retries, elapsed time and cost;
 do not enable paid inference, live orchestration, account rulesets or self-approved policy
 rewrites as a consequence of these reference updates. Preserve the bounded v1 stopping point.
+
+## Subsequent maintenance observation
+
+The separate [CI review maintenance record](reviews/2026-11-01-ci-review-maintenance.md)
+records a compatible update with supported Node/npm tooling and a clean audit in
+the isolated follow-up worktree. The audit and Arborist failure above describe the
+earlier lock/tooling observation; they are not the current follow-up validation.

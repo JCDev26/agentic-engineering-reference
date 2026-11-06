@@ -101,7 +101,7 @@ These are proofs within a trusted, synchronous, in-memory reference. Capability 
 
 ### Run the reference itself (optional)
 
-These commands run this repository's executable examples; they are **not required to review another project**. Use Node.js 22.12 or later within the versions declared by the package and CI configuration.
+These commands run this repository's executable examples; they are **not required to review another project**. Use the Node.js **24.22.2** pin in `.node-version`, or supported Node 22 starting at **22.23.4**. Package engines restrict support to these two LTS lines; CI checks both pinned versions. Node types target the lower supported major.
 
 ```sh
 npm ci
