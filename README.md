@@ -136,3 +136,14 @@ environment, time, named checks, and separate visual/owner states; it is not an 
 service or authenticated approval mechanism. Keep the project bounded and independently usable.
 
 These reporting adapters are optional library utilities. Existing CLI/CI output keeps its native format; adapter tests do not establish a universally wired reporting or human-approval system.
+
+## Optional CI review fixture experiment
+
+The [revision-bound CI review example](docs/scenarios/ci-review-fixtures.md) demonstrates
+explicit prerequisites, bounded fixture handoffs, deterministic joining, governed
+named verification and a human review packet. It reuses the v1 contracts and keeps
+platform adapters outside policy. It does not dispatch live specialists or execute
+agent-requested commands. Replay executes no verification actions. Editable approval
+metadata grants no authority; fixture results establish no multi-agent performance
+advantage. The guide records the separate host, permission, cancellation and usage
+gate before any live pilot.

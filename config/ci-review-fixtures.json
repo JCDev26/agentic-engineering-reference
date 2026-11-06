@@ -1,0 +1,13 @@
+{
+  "limits": {
+    "maxFiles": 12,
+    "maxPacketBytes": 24576,
+    "maxSpecialists": 2,
+    "maxHandoffBytes": 8192,
+    "maxFindingsPerSpecialist": 8,
+    "maxSessionMs": 120000,
+    "maxSpecialistMs": 45000,
+    "maxActionMs": 20000,
+    "maxVerificationAttempts": 2
+  }
+}
