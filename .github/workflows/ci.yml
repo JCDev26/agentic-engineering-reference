@@ -7,13 +7,17 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   validate:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     strategy:
       matrix:
-        node: ["22.12.0", "24"]
+        node: ["22.23.4", "24.22.2"]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -23,5 +27,14 @@ jobs:
           node-version: ${{ matrix.node }}
           cache: npm
       - run: npm ci
-      - run: npm test
+      - run: npm test -- --reporter=default --reporter=junit --outputFile=artifacts/unit-tests.xml
       - run: npm run typecheck
+
+      - name: Retain native unit report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: reference-node-${{ matrix.node }}-${{ github.sha }}
+          path: artifacts/unit-tests.xml
+          retention-days: 7
+          if-no-files-found: warn
