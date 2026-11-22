@@ -1,11 +1,50 @@
 # Agentic Engineering Reference
 
-Use this project to review how a repository controls who can act and how it decides whether work succeeded. A contributor can be a person, an AI agent, a script, or a CI job.
+Learn how to separate who may do engineering work from who checks the result. Run the TypeScript reference to see those decisions in code, or use the Architecture Challenge to examine them in your own project. A contributor can be a person, an AI agent, a script, or a CI job.
 
 | What do you want to do? | Start here |
 | --- | --- |
 | Review a repository you maintain | Follow [Challenge Your Project](#challenge-your-project). You need access to the target and a reviewer. The chat workflow requires no installation. |
 | Learn by running examples | Follow [Run the reference itself](#run-the-reference-itself-optional). The TypeScript examples cover duplicate usernames, restoring a backup, and retrying a reservation after a lost reply. |
+
+## What the executable reference proves
+
+Suppose someone asks an agent to fix duplicate registrations. The agent reports that it finished. Can the system establish that the fix works? The reference models that decision in a small, in-memory application. A local contributor selects a predefined implementation. A separate validator tries to register a new user, register that same name again, and register another new user after the duplicate is rejected. You can run every case locally without an AI account.
+
+### Run the reference itself (optional)
+
+Use Git, Node.js **24.22.2** (the version in `.node-version`), and npm. Clone this repository and install its locked dependencies. If you already have the checkout, start at `npm ci` in its root.
+
+```sh
+git clone https://github.com/JCDev26/agentic-engineering-reference.git
+cd agentic-engineering-reference
+npm ci
+npm test -- tests/duplicate-username-workflow.test.ts --reporter=verbose
+```
+
+Expect **four passing tests**. Each test passes when the system makes the right decision for its inputs, including when the proposed fix is faulty. Read the test names alongside the two results the code records:
+
+| Scenario | What the validator establishes | What ends the workflow |
+| --- | --- | --- |
+| Correct implementation and eligible validator | All three registration checks pass. | Completed. |
+| Implementation still accepts duplicates | The validator observes a failed acceptance check. | Validation rejects the implementation. |
+| No eligible validator | The behavior remains unknown. | Contributor selection fails. |
+| Implementation requests a target outside its allowed scope | Validation is never reached. | Policy denies the action before handoff. |
+
+### Follow one decision through the code
+
+1. **Read the requirement.** Find the three registration behaviors and the structured evidence needed to accept them. [Engineering intent](src/scenarios/duplicate-username-intent.ts)
+2. **Follow the handoff.** The workflow selects an implementer, checks its authority, and passes its artifact to a separately selected validator. The validator needs its own grant. [Multi-stage workflow](src/scenarios/duplicate-username-workflow.ts)
+3. **Inspect the finding.** The validator tries the selected behavior against the user store and records what actually happened. The evaluator checks that evidence against the intent. [Acceptance validator](src/scenarios/duplicate-username-validator.ts) · [Evaluator](src/core/evaluator.ts)
+4. **Compare the endings.** In the tests, find `duplicateSafeCandidate()` and `duplicateAcceptingCandidate()`. Both supply an implementation. Only one satisfies the same acceptance criteria. Compare their results with the denied case, where the outcome retains `governance-denied` and the evaluation is `inconclusive`. [Four worked cases](tests/duplicate-username-workflow.test.ts) · [Outcome resolver](src/core/outcome-resolver.ts)
+
+### Apply the idea to a different decision
+
+Run `npm test -- tests/operational-examples.test.ts --reporter=verbose` to see how an incomplete backup can decompress successfully and how a lost reservation reply can lead to a second booking. When reading either example, ask: **What would I observe independently before trusting the contributor’s account?** [Backup and reservation exercises](docs/scenarios/operational-examples.md)
+
+To use the reference while designing your own workflow, pick one operation and write down its acceptance criteria, the grant required to act, and the observation that would establish success. Trace what your system reports if that observation cannot be collected. The [contracts guide](docs/contracts/core-contracts.md) explains who owns each decision; the [scenario guide](docs/scenarios/reference-scenario-001.md) shows how the pieces fit together.
+
+Run `npm test` and `npm run typecheck` for the full reference checks. For design detail, read the [architecture decisions](docs/adr/) and [capability matrix](docs/v1-capability-matrix.md). The examples run trusted code in one process. Production isolation, external identity, and human approval enforcement remain outside the demonstrated guarantees.
 
 ## Challenge Your Project
 
@@ -72,26 +111,6 @@ The Challenge does not authorize implementation. The engineer/team decides wheth
 The target need not be an AI system. Intent may be an API/business requirement; a contributor may be a service, worker, script, or CI job; governance may be authorization/business rules; evidence may be tests, responses, database results, or artifacts; outcome may be an API/job status; workflow may be a direct function/service call. Agent-specific questions may be `not applicable`. Absence of an agent framework is not a defect.
 
 The Challenge is not a scanner, certification, security certification, automatic refactoring tool, architecture purity test, requirement to use AI, or requirement to adopt these classes. A human reviewer can use the same [checklist](docs/challenge/claim-checklist.md).
-
-## What the executable reference proves
-
-The reference task is deliberately small: **prevent duplicate usernames while preserving valid user creation**. Local contributors return references to predefined implementation behaviors. A validator exercises the selected behavior; no contributor edits source code or calls an AI service.
-
-Tests demonstrate structured intent driving evaluation, contributor substitution without changing contracts, capability/policy denial before executor invocation, dependency readiness and fan-in, per-stage authority, original validation evidence preservation, and terminal failure causality. Execution success can coexist with engineering rejection; unreachable validation is inconclusive.
-
-These are proofs within a trusted, synchronous, in-memory reference. Capability checks gate calls; they do not sandbox arbitrary code. Provenance identifies producers; it does not authenticate external producers. See the [reference architecture](docs/reference-architecture.md) and [v1 capability matrix](docs/v1-capability-matrix.md) for evidence and limits.
-
-### Run the reference itself (optional)
-
-These commands run this repository's executable examples; they are **not required to review another project**. Use the Node.js **24.22.2** pin in `.node-version`, or supported Node 22 starting at **22.23.4**. Package engines restrict support to these two LTS lines; CI checks both pinned versions. Node types target the lower supported major.
-
-```sh
-npm ci
-npm test
-npm run typecheck
-```
-
-Start with the [scenario guide](docs/scenarios/reference-scenario-001.md), [multi-stage scenario](src/scenarios/duplicate-username-workflow.ts), [its tests](tests/duplicate-username-workflow.test.ts), and [v1 failure matrix](tests/v1-failure-matrix.test.ts). The [contracts guide](docs/contracts/core-contracts.md), [domain vocabulary](docs/domain/engineering-domain.md), and [architecture decisions](docs/adr/) explain the design.
 
 ## First External Challenge
 
