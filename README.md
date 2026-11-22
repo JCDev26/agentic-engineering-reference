@@ -26,6 +26,8 @@ The reviewer first understands the target in its own vocabulary, traces one cons
 
 Read the [full method](docs/challenge/architecture-challenge.md) or [worked example assessment](docs/challenge/example-assessment.md) for detail. The example reviews this reference; it is not a template architecture to copy.
 
+Read [why the Challenge asks these twenty questions](docs/challenge/question-design.md). To practice tracing a decision beyond the username example, run the [backup recovery and reservation retry exercises](docs/scenarios/operational-examples.md).
+
 ```text
 Your Repository → Architecture Challenge Prompt
   → Repository-Aware Engineering Reviewer

@@ -18,7 +18,7 @@ Trace one consequential operation from requested result through its responsible 
 
 Assess all 20 questions below, using the target project's vocabulary:
 
-1. **C01 — Intent:** What is the intended engineering result? How do explicit requirements affect acceptance or evaluation? Separate human meaning from machine-executed checks.
+1. **C01 — Intent:** What is the intended engineering result? How do explicit requirements affect acceptance or evaluation? Separate human meaning from machine-executed checks. Who bears the consequences if the result is wrong, and which acceptance check protects their interest?
 2. **C02 — Contributors:** Which humans, scripts, pipelines, services, handlers, or agents actually perform work? Distinguish real integrations from simulated labels.
 3. **C03 — Separation:** Are workflow responsibilities and success criteria independent from the contributor/mechanism? Would substitution require redefining them?
 4. **C04 — Capabilities:** Where is authority explicitly bounded? Is there proof that ungranted actions cannot invoke the relevant executor?
@@ -26,17 +26,17 @@ Assess all 20 questions below, using the target project's vocabulary:
 6. **C06 — Least privilege:** Are permissions and credential exposure appropriate to each responsibility, role, or stage?
 7. **C07 — Execution boundary:** What actual isolation exists? Distinguish interface boundaries and trusted in-process code from OS, process, network, or service enforcement.
 8. **C08 — Evidence:** What observations establish what happened? Distinguish output artifacts, execution telemetry, and engineering validation results.
-9. **C09 — Provenance:** Who produced each important observation? Does its original identity/context survive? Distinguish attribution from authentication and tamper protection.
+9. **C09 — Provenance:** Who produced each important observation? Does its original identity/context survive? Distinguish attribution from authentication and tamper protection. Which revision, inputs and attempt does this evidence cover? What change makes it historical?
 10. **C10 — Success:** Can execution complete successfully while the engineering result fails independent validation?
 11. **C11 — Applicability:** Can validation be unreachable without being labeled as if it ran and failed? Consider blocked execution and missing input.
 12. **C12 — Cause ownership:** Which layer directly observes each failure, and does it return a structured cause rather than force downstream log parsing?
-13. **C13 — Terminal causality:** Does the final result preserve the primary cause, even when evaluation is inconclusive? Inspect exact negative paths.
+13. **C13 — Terminal causality:** Does the final result preserve the primary cause, even when evaluation is inconclusive? Inspect exact negative paths. If a response is lost after a side effect, how does the caller distinguish unknown completion from a safe retry?
 14. **C14 — Platform coupling:** Does the project depend on a particular AI, IDE, vendor, or platform? Is that dependence intentional and compatible with its claims?
 15. **C15 — Adapters:** Are protocol/platform details translated at appropriate boundaries rather than silently redefining engineering meaning?
 16. **C16 — Handoffs:** What data and dependencies cross responsibilities? Are readiness, required input, and fan-in correct where applicable?
 17. **C17 — Authority transfer:** Does downstream work require its own authority, or can handed-off data silently grant permissions?
-18. **C18 — Human control:** What requires review or approval? Are gates enforced with appropriate decision authority, or merely documented fields?
-19. **C19 — Claim evidence:** Which important claims have behavioral proof? Distinguish implementation, tests that exercise it, unexecuted tests, and README aspirations.
+18. **C18 — Human control:** What requires review or approval? Are gates enforced with appropriate decision authority, or merely documented fields? When work has begun, who can stop or reconcile it, and what shows that the intervention took effect?
+19. **C19 — Claim evidence:** Which important claims have behavioral proof? Distinguish implementation, tests that exercise it, unexecuted tests, and README aspirations. For a reliability or improvement claim, what representative cases, repeated trials, failures and comparison support it?
 20. **C20 — Scope:** What is intentionally deferred? Are limitations honest, and is there a clear stop point?
 
 Classify each question as exactly one of:
