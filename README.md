@@ -1,49 +1,26 @@
 # Agentic Engineering Reference
 
-A v1 reference for engineering work guided by explicit intent, deterministic governance, independent validation, and attributable evidence. AI is one possible contributor alongside humans, scripts, pipelines, and services.
+Use this project to review how a repository controls who can act and how it decides whether work succeeded. A contributor can be a person, an AI agent, a script, or a CI job.
 
-This repository has two deliverables:
-
-- **Executable Reference Architecture:** a small TypeScript implementation and tests showing what the architectural beliefs mean. Start with [what v1 proves](#what-the-executable-reference-proves).
-- **Architecture Challenge:** a portable review method for interrogating another project's claims without adopting this implementation. Start with [Challenge Your Project](#challenge-your-project).
-
-The contributor is not the workflow. The platform is not the architecture. Execution completion is not engineering success.
+| What do you want to do? | Start here |
+| --- | --- |
+| Review a repository you maintain | Follow [Challenge Your Project](#challenge-your-project). You need access to the target and a reviewer. The chat workflow requires no installation. |
+| Learn by running examples | Follow [Run the reference itself](#run-the-reference-itself-optional). The TypeScript examples cover duplicate usernames, restoring a backup, and retrying a reservation after a lost reply. |
 
 ## Challenge Your Project
 
-Use the Challenge to test whether a project's claims hold up along real execution and failure paths. It requires **no installation of this repository in the target project and no project-specific architecture configuration**.
+Pick one operation you care about. For example, “Can our reporting agent publish a release?” The review follows that operation from the request through the permission check to the actual effect.
 
-### 30-second quick start
+1. **Open the repository you want reviewed.** Start a chat in a coding tool that can read that repository. For a private repo, use an environment approved for its contents. Give the reviewer the repository name and commit you want assessed. Start with read access. [Privacy and access guidance](#privacy--security-before-you-run-it)
+2. **Ask for claims.** Open the [first-pass prompt](docs/challenge/project-review-prompt.md), copy everything below the horizontal divider, and paste it into the chat. Name your chosen operation in the same message. Expect 20 answers. For each claim about behavior, the reviewer should say where the action happens, what it predicts, and what you could observe. Save that response before continuing.
+3. **Challenge those claims.** In the same chat, paste everything below the divider in the [second-pass prompt](docs/challenge/pressure-test-prompt.md). A second reviewer can also do this if you give them the saved answers and the same revision. The reviewer applies general checks and proposes cases that could contradict the answers. Authorize specific local tests if appropriate. When a check cannot be run or verified from existing evidence, record it as inconclusive.
+4. **Read the verdict and decide.** For each tested claim, look for the original prediction, what the reviewer actually observed, and a verdict of **supported within the tested scope**, **contradicted**, or **inconclusive**. You decide whether a finding warrants a change.
 
-1. Open your target repository in an authorized repository-aware coding/software-engineering agent; check the [privacy and access guidance](#privacy--security-before-you-run-it) first.
-2. For the first full assessment, choose a strong reasoning-capable model and high/deep reasoning if available.
-3. Copy the complete [project review prompt](docs/challenge/project-review-prompt.md) below its divider.
-4. Paste it into the agent; it reviews the repository currently open in the workspace.
-5. Keep the initial assessment read-only; grant test/terminal execution separately when appropriate.
-6. Save the first-pass answers. Then give the reviewer the [pressure-test prompt](docs/challenge/pressure-test-prompt.md). Review its evidence and verdicts before authorizing changes.
+**What a finding looks like:** A reviewer claims that retrying a reservation always leaves one booking. Reusing the same request ID leaves one. Retrying with a fresh ID leaves two. The broad claim is contradicted; the same-ID guarantee holds in this exercise. [Runnable reservation and backup examples](docs/scenarios/operational-examples.md)
 
-For automation, generate an answer sheet and claim-specific challenge cards with the [local checklist planner](docs/challenge/automated-checklist.md).
+**Want a structured record?** The optional [checklist planner](docs/challenge/automated-checklist.md) generates a JSON answer sheet and challenge cards from this reference checkout. A reviewer conducts the checks in the target repo. The chat workflow above works independently of the planner.
 
-The reviewer first understands the target in its own vocabulary, traces one consequential operation, and inspects implementation, tests, configuration, and CI. It assesses C01–C20, separates defects from intentional differences and evidence limits, and recommends only the smallest justified improvement—or **"No implementation change is currently earned."**
-
-Read the [full method](docs/challenge/architecture-challenge.md) or [worked example assessment](docs/challenge/example-assessment.md) for detail. The example reviews this reference; it is not a template architecture to copy.
-
-Read [why the Challenge asks these twenty questions](docs/challenge/question-design.md). To practice tracing a decision beyond the username example, run the [backup recovery and reservation retry exercises](docs/scenarios/operational-examples.md).
-
-```text
-Your Repository → Architecture Challenge Prompt
-  → Repository-Aware Engineering Reviewer
-  → Understand target in its own vocabulary
-  → Trace one consequential operation
-  → Inspect implementation + tests + CI
-  → Save the C01–C20 claims and predictions
-  → Challenge those predictions against observable effects
-  → Weakest consequential boundary
-  → Smallest justified improvement (or none)
-  → Human review
-```
-
-This is a review loop, not software installed or executed inside the target.
+See the [full method](docs/challenge/architecture-challenge.md), [worked assessment](docs/challenge/example-assessment.md), and [rationale for the twenty questions](docs/challenge/question-design.md) for more detail.
 
 ### Privacy & Security Before You Run It
 
