@@ -52,4 +52,4 @@ There are no investigate/plan/review/deliver stages, real human contributors, ap
 
 Handoffs retain upstream stage evidence in memory; the validator consumes artifact references. They are neither a remote transport nor an authority delegation system. Multiple ready stages run sequentially. The fan-in fixture does not imply parallel scheduling.
 
-To run the full reference, use `npm ci`, `npm test`, and `npm run typecheck`. v1 is complete when its bounded claims remain true; expanding the task into an application or platform is not a completion requirement.
+Follow the linked source and test cases to trace each decision. The conclusions apply to the bounded scenario described here.

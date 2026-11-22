@@ -1,58 +1,15 @@
 # Agentic Engineering Reference
 
-Learn how to separate who may do engineering work from who checks the result. Run the TypeScript reference to see those decisions in code, or use the Architecture Challenge to examine them in your own project. A contributor can be a person, an AI agent, a script, or a CI job.
+Use this repository as a reading guide and an architectural obstacle course. Start with one engineering decision. Identify who can act, what evidence would establish success, and who decides whether the work can advance.
 
-| What do you want to do? | Start here |
+| What brings you here? | Start here |
 | --- | --- |
-| Review a repository you maintain | Follow [Challenge Your Project](#challenge-your-project). You need access to the target and a reviewer. The chat workflow requires no installation. |
-| Learn by running examples | Follow [Run the reference itself](#run-the-reference-itself-optional). The TypeScript examples cover duplicate usernames, restoring a backup, and retrying a reservation after a lost reply. |
-| Try checkpoint memory and live specialist steering | Run the [release-review workshop](docs/scenarios/checkpoint-swarm.md). Interrupt a timing draft, let unrelated work finish, and see what happens if permission changes before publication. |
-| Measure the review method | Run the [reviewer calibration exercise](docs/challenge/reviewer-calibration.md) with a known defect, a sound case and missing evidence. |
+| Design an agent workflow | Trace the [duplicate registration example](docs/scenarios/reference-scenario-001.md) from intent to independent validation. |
+| Learn from a concrete failure | Read the [backup and reservation cases](docs/scenarios/operational-examples.md). A backup can decompress with missing records. A successful retry can create a second booking. |
+| Challenge an existing system | Use the two prompts in [Challenge Your Project](#challenge-your-project) in the target repository. |
+| Study specialist coordination | Read the [checkpoint and steering case](docs/scenarios/checkpoint-swarm.md). The executable swarm and quality tasks belong to the [Playwright Wrapper](https://github.com/JCDev26/playwright-agent-wrapper-starter). |
 
-## What the executable reference proves
-
-Suppose someone asks an agent to fix duplicate registrations. The agent reports that it finished. Can the system establish that the fix works? The reference models that decision in a small, in-memory application. A local contributor selects a predefined implementation. A separate validator tries to register a new user, register that same name again, and register another new user after the duplicate is rejected. You can run every case locally without an AI account.
-
-### Run the reference itself (optional)
-
-Use Git, Node.js **24.22.2** (the version in `.node-version`), and npm. Clone this repository and install its locked dependencies. If you already have the checkout, start at `npm ci` in its root.
-
-```sh
-git clone https://github.com/JCDev26/agentic-engineering-reference.git
-cd agentic-engineering-reference
-npm ci
-npm test -- tests/duplicate-username-workflow.test.ts --reporter=verbose
-```
-
-Expect **four passing tests**. Each test passes when the system makes the right decision for its inputs, including when the proposed fix is faulty. Read the test names alongside the two results the code records:
-
-| Scenario | What the validator establishes | What ends the workflow |
-| --- | --- | --- |
-| Correct implementation and eligible validator | All three registration checks pass. | Completed. |
-| Implementation still accepts duplicates | The validator observes a failed acceptance check. | Validation rejects the implementation. |
-| No eligible validator | The behavior remains unknown. | Contributor selection fails. |
-| Implementation requests a target outside its allowed scope | Validation is never reached. | Policy denies the action before handoff. |
-
-### Follow one decision through the code
-
-1. **Read the requirement.** Find the three registration behaviors and the structured evidence needed to accept them. [Engineering intent](src/scenarios/duplicate-username-intent.ts)
-2. **Follow the handoff.** The workflow selects an implementer, checks its authority, and passes its artifact to a separately selected validator. The validator needs its own grant. [Multi-stage workflow](src/scenarios/duplicate-username-workflow.ts)
-3. **Inspect the finding.** The validator tries the selected behavior against the user store and records what actually happened. The evaluator checks that evidence against the intent. [Acceptance validator](src/scenarios/duplicate-username-validator.ts) · [Evaluator](src/core/evaluator.ts)
-4. **Compare the endings.** In the tests, find `duplicateSafeCandidate()` and `duplicateAcceptingCandidate()`. Both supply an implementation. Only one satisfies the same acceptance criteria. Compare their results with the denied case, where the outcome retains `governance-denied` and the evaluation is `inconclusive`. [Four worked cases](tests/duplicate-username-workflow.test.ts) · [Outcome resolver](src/core/outcome-resolver.ts)
-
-### Apply the idea to a different decision
-
-Run `npm test -- tests/operational-examples.test.ts --reporter=verbose` to see how an incomplete backup can decompress successfully and how a lost reservation reply can lead to a second booking. When reading either example, ask: **What would I observe independently before trusting the contributor’s account?** [Backup and reservation exercises](docs/scenarios/operational-examples.md)
-
-To use the reference while designing your own workflow, pick one operation and write down its acceptance criteria, the grant required to act, and the observation that would establish success. Trace what your system reports if that observation cannot be collected. The [contracts guide](docs/contracts/core-contracts.md) explains who owns each decision; the [scenario guide](docs/scenarios/reference-scenario-001.md) shows how the pieces fit together.
-
-Run `npm test` and `npm run typecheck` for the full reference checks. For design detail, read the [architecture decisions](docs/adr/) and [capability matrix](docs/v1-capability-matrix.md). The examples run trusted code in one process. Production isolation, external identity, and human approval enforcement remain outside the demonstrated guarantees.
-
-### Try steering a swarm
-
-After `npm ci`, run `npm run --silent reference:swarm -- demo`. Security flags a possible redirect, Performance checks which samples reached the product, and Reporting receives the result while its job is offline. The conductor holds one section of the report. The host checks the latest evidence and grant before it can record a release in the local ledger.
-
-Use `workshop` in place of `demo` to steer the same jobs yourself. Type `brief security` to exchange a JSON brief and reply with your own tool. Use `memory` to compare a saved handoff against a changed revision, a revoked grant or a corrected observation. Each example runs locally with synthetic evidence and no model credentials. [Commands and worked outcomes](docs/scenarios/checkpoint-swarm.md)
+Read the [contracts](docs/contracts/core-contracts.md) and [architecture decisions](docs/adr/) for implementation detail. The examples and test source can be inspected in the browser. Visitors need only the written material.
 
 ## Challenge Your Project
 
@@ -65,7 +22,7 @@ Pick one operation you care about. For example, “Can our reporting agent publi
 
 **What a finding looks like:** A reviewer claims that retrying a reservation always leaves one booking. Reusing the same request ID leaves one. Retrying with a fresh ID leaves two. The broad claim is contradicted; the same-ID guarantee holds in this exercise. [Runnable reservation and backup examples](docs/scenarios/operational-examples.md)
 
-**Want a structured record?** The optional [checklist planner](docs/challenge/automated-checklist.md) generates a JSON answer sheet and challenge cards from this reference checkout. A reviewer conducts the checks in the target repo. The chat workflow above works independently of the planner.
+**Want a structured record?** Use the [review worksheet](docs/challenge/automated-checklist.md) for the original claim, contrary observation, control and verdict.
 
 See the [full method](docs/challenge/architecture-challenge.md), [worked assessment](docs/challenge/example-assessment.md), and [rationale for the twenty questions](docs/challenge/question-design.md) for more detail.
 
@@ -146,13 +103,6 @@ service or authenticated approval mechanism. Keep the project bounded and indepe
 
 These reporting adapters are optional library utilities. Existing CLI/CI output keeps its native format; adapter tests do not establish a universally wired reporting or human-approval system.
 
-## Optional CI review fixture experiment
+## CI review case study
 
-The [revision-bound CI review example](docs/scenarios/ci-review-fixtures.md) demonstrates
-explicit prerequisites, bounded fixture handoffs, deterministic joining, governed
-named verification and a human review packet. It reuses the v1 contracts and keeps
-platform adapters outside policy. It does not dispatch live specialists or execute
-agent-requested commands. Replay executes no verification actions. Editable approval
-metadata grants no authority; fixture results establish no multi-agent performance
-advantage. The guide records the separate host, permission, cancellation and usage
-gate before any live pilot.
+The revision-bound CI scenario illustrates how prerequisites, specialist handoffs, verification and a human review packet fit together. Its fixture and maintainer validation remain available in the repository history and source. For an operational quality task or swarm session, start in the [Playwright Wrapper](https://github.com/JCDev26/playwright-agent-wrapper-starter).
