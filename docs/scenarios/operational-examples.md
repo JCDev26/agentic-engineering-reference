@@ -1,10 +1,6 @@
 # Two operational decisions to review
 
-Run the exercises from the repository root after installing the locked dependencies on a supported Node version.
-
-```sh
-npm test -- tests/operational-examples.test.ts
-```
+Read the cases below and compare the claimed outcome with the observation available to the reviewer.
 
 Both examples run locally with synthetic records. The external sources explain the operational problems that motivated them. Each exercise asks the reviewer to identify what can be concluded at a particular decision point. [Executable cases](../../tests/operational-examples.test.ts)
 

@@ -6,7 +6,7 @@
 
 **Traced operation:** duplicate-username intent → selected implementation → governed execution → artifact handoff → separately selected/governed validator → original acceptance evidence → intent requirements → terminal result. Correct and duplicate-accepting implementations use the same contracts but lead to different engineering outcomes.
 
-The cited tests are executable proof locations; this example does not embed a changing total test count or imply that every reader has run them. Reproduce with `npm ci`, `npm test`, and `npm run typecheck`. The [maturation review](../reviews/v1-maturation-review.md) records the actual starting baseline; the completion commit/run records final validation.
+Read the cited test cases as examples of the evidence a reviewer would seek. The [maturation review](../reviews/v1-maturation-review.md) records the historical validation.
 
 | Claim | Classification | Evidence and rationale | Risk / follow-up |
 | --- | --- | --- | --- |

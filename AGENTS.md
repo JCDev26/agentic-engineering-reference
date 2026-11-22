@@ -2,6 +2,7 @@
 
 This is a bounded synchronous, in-memory engineering reference, not a production agent platform.
 Read README.md first; load task-specific contracts and tests only as needed.
+Visitors read the worked examples and copy the two challenge prompts into the target project. Keep executable quality tasks, swarm tools and worksheet generators in the Playwright Wrapper. The validation commands below are for reference maintainers.
 Domain contracts: src/domain; deterministic execution/governance: src/core; examples: src/scenarios.
 Portable observation contract: docs/run-evidence-v1.md; implementation: src/reporting/run-report.ts.
 

@@ -1,46 +1,30 @@
 # Agentic Engineering Reference
 
-A v1 reference for engineering work guided by explicit intent, deterministic governance, independent validation, and attributable evidence. AI is one possible contributor alongside humans, scripts, pipelines, and services.
+Use this repository as a reading guide and an architectural obstacle course. Start with one engineering decision. Identify who can act, what evidence would establish success, and who decides whether the work can advance.
 
-This repository has two deliverables:
+| What brings you here? | Start here |
+| --- | --- |
+| Design an agent workflow | Trace the [duplicate registration example](docs/scenarios/reference-scenario-001.md) from intent to independent validation. |
+| Learn from a concrete failure | Read the [backup and reservation cases](docs/scenarios/operational-examples.md). A backup can decompress with missing records. A successful retry can create a second booking. |
+| Challenge an existing system | Use the two prompts in [Challenge Your Project](#challenge-your-project) in the target repository. |
+| Study specialist coordination | Read the [checkpoint and steering case](docs/scenarios/checkpoint-swarm.md). The executable swarm and quality tasks belong to the [Playwright Wrapper](https://github.com/JCDev26/playwright-agent-wrapper-starter). |
 
-- **Executable Reference Architecture:** a small TypeScript implementation and tests showing what the architectural beliefs mean. Start with [what v1 proves](#what-the-executable-reference-proves).
-- **Architecture Challenge:** a portable review method for interrogating another project's claims without adopting this implementation. Start with [Challenge Your Project](#challenge-your-project).
-
-The contributor is not the workflow. The platform is not the architecture. Execution completion is not engineering success.
+Read the [contracts](docs/contracts/core-contracts.md) and [architecture decisions](docs/adr/) for implementation detail. The examples and test source can be inspected in the browser. Visitors need only the written material.
 
 ## Challenge Your Project
 
-Use the Challenge to test whether a project's claims hold up along real execution and failure paths. It requires **no installation of this repository in the target project and no project-specific architecture configuration**.
+Pick one operation you care about. For example, “Can our reporting agent publish a release?” The review follows that operation from the request through the permission check to the actual effect.
 
-### 30-second quick start
+1. **Open the repository you want reviewed.** Start a chat in a coding tool that can read that repository. For a private repo, use an environment approved for its contents. Give the reviewer the repository name and commit you want assessed. Start with read access. [Privacy and access guidance](#privacy--security-before-you-run-it)
+2. **Ask for claims.** Open the [first-pass prompt](docs/challenge/project-review-prompt.md), copy everything below the horizontal divider, and paste it into the chat. Name your chosen operation in the same message. Expect 20 answers. For each claim about behavior, the reviewer should say where the action happens, what it predicts, and what you could observe. Save that response before continuing.
+3. **Challenge those claims.** In the same chat, paste everything below the divider in the [second-pass prompt](docs/challenge/pressure-test-prompt.md). A second reviewer can also do this if you give them the saved answers and the same revision. The reviewer applies general checks and proposes cases that could contradict the answers. Authorize specific local tests if appropriate. When a check cannot be run or verified from existing evidence, record it as inconclusive.
+4. **Read the verdict and decide.** For each tested claim, look for the original prediction, what the reviewer actually observed, and a verdict of **supported within the tested scope**, **contradicted**, or **inconclusive**. You decide whether a finding warrants a change.
 
-1. Open your target repository in an authorized repository-aware coding/software-engineering agent; check the [privacy and access guidance](#privacy--security-before-you-run-it) first.
-2. For the first full assessment, choose a strong reasoning-capable model and high/deep reasoning if available.
-3. Copy the complete [project review prompt](docs/challenge/project-review-prompt.md) below its divider.
-4. Paste it into the agent; it reviews the repository currently open in the workspace.
-5. Keep the initial assessment read-only; grant test/terminal execution separately when appropriate.
-6. Review the evidence-backed findings before authorizing any changes.
+**What a finding looks like:** A reviewer claims that retrying a reservation always leaves one booking. Reusing the same request ID leaves one. Retrying with a fresh ID leaves two. The broad claim is contradicted; the same-ID guarantee holds in this exercise. [Runnable reservation and backup examples](docs/scenarios/operational-examples.md)
 
-The reviewer first understands the target in its own vocabulary, traces one consequential operation, and inspects implementation, tests, configuration, and CI. It assesses C01–C20, separates defects from intentional differences and evidence limits, and recommends only the smallest justified improvement—or **"No implementation change is currently earned."**
+**Want a structured record?** Use the [review worksheet](docs/challenge/automated-checklist.md) for the original claim, contrary observation, control and verdict.
 
-Read the [full method](docs/challenge/architecture-challenge.md) or [worked example assessment](docs/challenge/example-assessment.md) for detail. The example reviews this reference; it is not a template architecture to copy.
-
-Read [why the Challenge asks these twenty questions](docs/challenge/question-design.md). To practice tracing a decision beyond the username example, run the [backup recovery and reservation retry exercises](docs/scenarios/operational-examples.md).
-
-```text
-Your Repository → Architecture Challenge Prompt
-  → Repository-Aware Engineering Reviewer
-  → Understand target in its own vocabulary
-  → Trace one consequential operation
-  → Inspect implementation + tests + CI
-  → C01–C20 evidence assessment
-  → Weakest consequential boundary
-  → Smallest justified improvement (or none)
-  → Human review
-```
-
-This is a review loop, not software installed or executed inside the target.
+See the [full method](docs/challenge/architecture-challenge.md), [worked assessment](docs/challenge/example-assessment.md), and [rationale for the twenty questions](docs/challenge/question-design.md) for more detail.
 
 ### Privacy & Security Before You Run It
 
@@ -93,26 +77,6 @@ The target need not be an AI system. Intent may be an API/business requirement; 
 
 The Challenge is not a scanner, certification, security certification, automatic refactoring tool, architecture purity test, requirement to use AI, or requirement to adopt these classes. A human reviewer can use the same [checklist](docs/challenge/claim-checklist.md).
 
-## What the executable reference proves
-
-The reference task is deliberately small: **prevent duplicate usernames while preserving valid user creation**. Local contributors return references to predefined implementation behaviors. A validator exercises the selected behavior; no contributor edits source code or calls an AI service.
-
-Tests demonstrate structured intent driving evaluation, contributor substitution without changing contracts, capability/policy denial before executor invocation, dependency readiness and fan-in, per-stage authority, original validation evidence preservation, and terminal failure causality. Execution success can coexist with engineering rejection; unreachable validation is inconclusive.
-
-These are proofs within a trusted, synchronous, in-memory reference. Capability checks gate calls; they do not sandbox arbitrary code. Provenance identifies producers; it does not authenticate external producers. See the [reference architecture](docs/reference-architecture.md) and [v1 capability matrix](docs/v1-capability-matrix.md) for evidence and limits.
-
-### Run the reference itself (optional)
-
-These commands run this repository's executable examples; they are **not required to review another project**. Use the Node.js **24.22.2** pin in `.node-version`, or supported Node 22 starting at **22.23.4**. Package engines restrict support to these two LTS lines; CI checks both pinned versions. Node types target the lower supported major.
-
-```sh
-npm ci
-npm test
-npm run typecheck
-```
-
-Start with the [scenario guide](docs/scenarios/reference-scenario-001.md), [multi-stage scenario](src/scenarios/duplicate-username-workflow.ts), [its tests](tests/duplicate-username-workflow.test.ts), and [v1 failure matrix](tests/v1-failure-matrix.test.ts). The [contracts guide](docs/contracts/core-contracts.md), [domain vocabulary](docs/domain/engineering-domain.md), and [architecture decisions](docs/adr/) explain the design.
-
 ## First External Challenge
 
 The Challenge was applied to the independent [Playwright Agent Wrapper](https://github.com/JCDev26/playwright-agent-wrapper-starter), without requiring it to adopt this reference's classes. It found concrete semantic defects: most importantly, child exit 1 had been treated as proof that tests ran and failed, although that exit can also occur without a trustworthy test judgment.
@@ -139,13 +103,6 @@ service or authenticated approval mechanism. Keep the project bounded and indepe
 
 These reporting adapters are optional library utilities. Existing CLI/CI output keeps its native format; adapter tests do not establish a universally wired reporting or human-approval system.
 
-## Optional CI review fixture experiment
+## CI review case study
 
-The [revision-bound CI review example](docs/scenarios/ci-review-fixtures.md) demonstrates
-explicit prerequisites, bounded fixture handoffs, deterministic joining, governed
-named verification and a human review packet. It reuses the v1 contracts and keeps
-platform adapters outside policy. It does not dispatch live specialists or execute
-agent-requested commands. Replay executes no verification actions. Editable approval
-metadata grants no authority; fixture results establish no multi-agent performance
-advantage. The guide records the separate host, permission, cancellation and usage
-gate before any live pilot.
+The revision-bound CI scenario illustrates how prerequisites, specialist handoffs, verification and a human review packet fit together. Its fixture and maintainer validation remain available in the repository history and source. For an operational quality task or swarm session, start in the [Playwright Wrapper](https://github.com/JCDev26/playwright-agent-wrapper-starter).
