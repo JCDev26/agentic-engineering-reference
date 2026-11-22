@@ -20,7 +20,9 @@ Use the Challenge to test whether a project's claims hold up along real executio
 3. Copy the complete [project review prompt](docs/challenge/project-review-prompt.md) below its divider.
 4. Paste it into the agent; it reviews the repository currently open in the workspace.
 5. Keep the initial assessment read-only; grant test/terminal execution separately when appropriate.
-6. Review the evidence-backed findings before authorizing any changes.
+6. Save the first-pass answers. Then give the reviewer the [pressure-test prompt](docs/challenge/pressure-test-prompt.md). Review its evidence and verdicts before authorizing changes.
+
+For automation, generate an answer sheet and claim-specific challenge cards with the [local checklist planner](docs/challenge/automated-checklist.md).
 
 The reviewer first understands the target in its own vocabulary, traces one consequential operation, and inspects implementation, tests, configuration, and CI. It assesses C01–C20, separates defects from intentional differences and evidence limits, and recommends only the smallest justified improvement—or **"No implementation change is currently earned."**
 
@@ -34,7 +36,8 @@ Your Repository → Architecture Challenge Prompt
   → Understand target in its own vocabulary
   → Trace one consequential operation
   → Inspect implementation + tests + CI
-  → C01–C20 evidence assessment
+  → Save the C01–C20 claims and predictions
+  → Challenge those predictions against observable effects
   → Weakest consequential boundary
   → Smallest justified improvement (or none)
   → Human review
