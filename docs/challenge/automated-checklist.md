@@ -23,3 +23,5 @@ The plan includes a common checklist even when the respondent makes few claims. 
 - **Replay:** On the reference revision containing these tests, run `npm test -- tests/operational-examples.test.ts` in the authorized reference checkout and retain the result for your review. [Reservation exercise](../scenarios/operational-examples.md)
 
 A target may use any language or framework. Its reviewer chooses the corresponding service call, state read and control. The example's outcome applies to the local reservation fixture.
+
+To measure how a reviewer handles a known defect and controls, run the [blind reviewer calibration](reviewer-calibration.md). To pressure-test a target's claims about saved context, permission changes or intervention during a job, use the [checkpoint and steering exercises](../scenarios/checkpoint-swarm.md#try-the-same-questions-on-your-repository).

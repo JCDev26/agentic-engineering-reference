@@ -6,6 +6,8 @@ Learn how to separate who may do engineering work from who checks the result. Ru
 | --- | --- |
 | Review a repository you maintain | Follow [Challenge Your Project](#challenge-your-project). You need access to the target and a reviewer. The chat workflow requires no installation. |
 | Learn by running examples | Follow [Run the reference itself](#run-the-reference-itself-optional). The TypeScript examples cover duplicate usernames, restoring a backup, and retrying a reservation after a lost reply. |
+| Try checkpoint memory and live specialist steering | Run the [release-review workshop](docs/scenarios/checkpoint-swarm.md). Interrupt a timing draft, let unrelated work finish, and see what happens if permission changes before publication. |
+| Measure the review method | Run the [reviewer calibration exercise](docs/challenge/reviewer-calibration.md) with a known defect, a sound case and missing evidence. |
 
 ## What the executable reference proves
 
@@ -45,6 +47,12 @@ Run `npm test -- tests/operational-examples.test.ts --reporter=verbose` to see h
 To use the reference while designing your own workflow, pick one operation and write down its acceptance criteria, the grant required to act, and the observation that would establish success. Trace what your system reports if that observation cannot be collected. The [contracts guide](docs/contracts/core-contracts.md) explains who owns each decision; the [scenario guide](docs/scenarios/reference-scenario-001.md) shows how the pieces fit together.
 
 Run `npm test` and `npm run typecheck` for the full reference checks. For design detail, read the [architecture decisions](docs/adr/) and [capability matrix](docs/v1-capability-matrix.md). The examples run trusted code in one process. Production isolation, external identity, and human approval enforcement remain outside the demonstrated guarantees.
+
+### Try steering a swarm
+
+After `npm ci`, run `npm run --silent reference:swarm -- demo`. Security flags a possible redirect, Performance checks which samples reached the product, and Reporting receives the result while its job is offline. The conductor holds one section of the report. The host checks the latest evidence and grant before it can record a release in the local ledger.
+
+Use `workshop` in place of `demo` to steer the same jobs yourself. Type `brief security` to exchange a JSON brief and reply with your own tool. Use `memory` to compare a saved handoff against a changed revision, a revoked grant or a corrected observation. Each example runs locally with synthetic evidence and no model credentials. [Commands and worked outcomes](docs/scenarios/checkpoint-swarm.md)
 
 ## Challenge Your Project
 

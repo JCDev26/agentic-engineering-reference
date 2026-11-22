@@ -6,7 +6,9 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "reference:ci-review:build": "tsc --project tsconfig.ci-review.json",
-    "reference:ci-review": "node artifacts/ci-review/src/scenarios/ci-review-demo.js"
+    "reference:ci-review": "node artifacts/ci-review/src/scenarios/ci-review-demo.js",
+    "prereference:swarm": "tsc --project tsconfig.ci-review.json",
+    "reference:swarm": "node artifacts/ci-review/src/scenarios/checkpoint-swarm/cli.js"
   },
   "repository": {
     "type": "git",
